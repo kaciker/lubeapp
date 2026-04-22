@@ -290,6 +290,7 @@ class ConfigBody(BaseModel):
 
 HTML_FILE = os.path.join(os.path.dirname(__file__), "index.html")
 FAVICON_FILE = os.path.join(os.path.dirname(__file__), "favicon.svg")
+APPLE_TOUCH_ICON_FILE = os.path.join(os.path.dirname(__file__), "apple-touch-icon.png")
 
 @app.get("/")
 def serve_frontend():
@@ -300,6 +301,11 @@ def serve_frontend():
 @app.get("/favicon.svg")
 def serve_favicon():
     return FileResponse(FAVICON_FILE, media_type="image/svg+xml")
+
+
+@app.get("/apple-touch-icon.png")
+def serve_apple_touch_icon():
+    return FileResponse(APPLE_TOUCH_ICON_FILE, media_type="image/png")
 
 
 @app.get("/api/health")
