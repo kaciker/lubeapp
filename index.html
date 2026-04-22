@@ -104,14 +104,16 @@
     transition:padding .22s ease, background .22s ease, box-shadow .22s ease;
   }
   .masthead-mini {
-    display:none;
+    display:flex;
     align-items:center;
     justify-content:space-between;
     gap:12px;
-    min-height:34px;
     opacity:0;
     transform:translateY(-8px);
-    transition:opacity .18s ease, transform .18s ease;
+    max-height:0;
+    overflow:hidden;
+    pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease, max-height .22s ease, margin-bottom .22s ease;
   }
   .masthead-mini-title {
     font-family:var(--serif);
@@ -216,9 +218,11 @@
     overflow:hidden;
   }
   .masthead.compact .masthead-mini {
-    display:flex;
     opacity:1;
     transform:translateY(0);
+    max-height:34px;
+    margin-bottom:2px;
+    pointer-events:auto;
   }
 
   /* status chip */
