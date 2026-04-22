@@ -672,6 +672,9 @@
     border-radius:var(--r-md);
     overflow:hidden;
   }
+  .history-swipe.dragging .history-item {
+    transition:none;
+  }
   .history-swipe.revealed .history-item {
     transform:translateX(-96px);
   }
@@ -712,6 +715,10 @@
     transform:scale(.99);
     border-color:var(--orange);
     box-shadow:0 4px 12px -4px var(--orange-glow);
+  }
+  .history-swipe.dragging .history-item:active,
+  .history-swipe.revealed .history-item:active {
+    transform:none;
   }
   .history-item::before {
     content:''; position:absolute;
@@ -1647,13 +1654,35 @@ async function deleteRecord(event, id) {
 
 function initHistorySwipe() {
   const rows = document.querySelectorAll('.history-swipe');
+  const ACTION_WIDTH = 96;
+  const OPEN_THRESHOLD = 52;
+  const CLOSE_THRESHOLD = 28;
 
   function closeRow(row) {
     if (!row) return;
     row.classList.remove('revealed');
+    row.classList.remove('dragging');
     const item = row.querySelector('.history-item');
     if (item) item.style.transform = '';
     if (openHistorySwipeRow === row) openHistorySwipeRow = null;
+  }
+
+  function openRow(row) {
+    if (!row) return;
+    row.classList.add('revealed');
+    row.classList.remove('dragging');
+    const item = row.querySelector('.history-item');
+    if (item) item.style.transform = `translateX(-${ACTION_WIDTH}px)`;
+    openHistorySwipeRow = row;
+  }
+
+  if (!document.body.dataset.historySwipeBound) {
+    document.addEventListener('pointerdown', event => {
+      if (openHistorySwipeRow && !event.target.closest('.history-swipe')) {
+        closeRow(openHistorySwipeRow);
+      }
+    });
+    document.body.dataset.historySwipeBound = 'true';
   }
 
   rows.forEach(row => {
@@ -1664,6 +1693,7 @@ function initHistorySwipe() {
     let deltaX = 0;
     let swiping = false;
     let moved = false;
+    let startOffset = 0;
 
     deleteBtn?.addEventListener('click', event => {
       if (row.classList.contains('revealed')) event.stopPropagation();
@@ -1675,6 +1705,8 @@ function initHistorySwipe() {
       deltaX = 0;
       moved = false;
       swiping = true;
+      startOffset = row.classList.contains('revealed') ? -ACTION_WIDTH : 0;
+      row.classList.add('dragging');
       if (openHistorySwipeRow && openHistorySwipeRow !== row) closeRow(openHistorySwipeRow);
     });
 
@@ -1684,26 +1716,34 @@ function initHistorySwipe() {
       const dy = event.clientY - startY;
       if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) {
         swiping = false;
-        item.style.transform = row.classList.contains('revealed') ? 'translateX(-96px)' : '';
+        row.classList.remove('dragging');
+        item.style.transform = row.classList.contains('revealed') ? `translateX(-${ACTION_WIDTH}px)` : '';
         return;
       }
       if (Math.abs(dx) < 8) return;
       moved = true;
-      deltaX = Math.max(-96, Math.min(0, row.classList.contains('revealed') ? dx - 96 : dx));
+      deltaX = startOffset + dx;
+      if (deltaX < -ACTION_WIDTH) {
+        deltaX = -ACTION_WIDTH - Math.min(24, (-ACTION_WIDTH - deltaX) * 0.2);
+      }
+      if (deltaX > 0) {
+        deltaX = Math.min(18, deltaX * 0.25);
+      }
       item.style.transform = `translateX(${deltaX}px)`;
     });
 
     item.addEventListener('pointerup', () => {
+      row.classList.remove('dragging');
       if (!moved) {
         swiping = false;
-        item.style.transform = row.classList.contains('revealed') ? 'translateX(-96px)' : '';
+        item.style.transform = row.classList.contains('revealed') ? `translateX(-${ACTION_WIDTH}px)` : '';
         return;
       }
       swiping = false;
-      if (deltaX <= -48) {
-        row.classList.add('revealed');
-        item.style.transform = 'translateX(-96px)';
-        openHistorySwipeRow = row;
+      if (deltaX <= -OPEN_THRESHOLD) {
+        openRow(row);
+      } else if (row.classList.contains('revealed') && deltaX <= -CLOSE_THRESHOLD) {
+        openRow(row);
       } else {
         closeRow(row);
       }
@@ -1712,7 +1752,8 @@ function initHistorySwipe() {
 
     item.addEventListener('pointercancel', () => {
       swiping = false;
-      item.style.transform = row.classList.contains('revealed') ? 'translateX(-96px)' : '';
+      row.classList.remove('dragging');
+      item.style.transform = row.classList.contains('revealed') ? `translateX(-${ACTION_WIDTH}px)` : '';
     });
 
     item.addEventListener('click', event => {
