@@ -101,11 +101,15 @@
     background:linear-gradient(180deg, rgba(255,248,239,.95) 0%, rgba(255,248,239,.78) 85%, transparent 100%);
     backdrop-filter:blur(18px) saturate(150%);
     -webkit-backdrop-filter:blur(18px) saturate(150%);
+    transition:padding .22s ease, background .22s ease, box-shadow .22s ease;
   }
   .masthead-top {
     display:flex; align-items:center; justify-content:space-between;
     border-bottom:1px solid var(--line-strong);
     padding-bottom:12px;
+    transition:opacity .18s ease, transform .18s ease, max-height .22s ease, padding-bottom .22s ease, margin-bottom .22s ease;
+    max-height:40px;
+    overflow:hidden;
   }
   .issue-mark {
     font-family:var(--mono); font-size:9px; font-weight:600;
@@ -128,7 +132,8 @@
 
   .wordmark {
     padding-top:14px;
-    display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+    display:flex; flex-direction:column; align-items:flex-start; gap:6px;
+    transition:padding-top .22s ease, gap .22s ease;
   }
   .wordmark h1 {
     font-family:var(--serif); font-weight:900;
@@ -136,17 +141,47 @@
     font-variation-settings: "opsz" 144;
     font-style:italic;
     color:var(--ink);
+    transition:font-size .22s ease, letter-spacing .22s ease;
   }
-  .wordmark h1 .amp {
-    font-style:italic; font-weight:300;
+  .wordmark h1 .brand-accent {
+    font-style:italic; font-weight:700;
     color:var(--orange);
     padding:0 1px;
   }
   .wordmark-sub {
     font-family:var(--mono); font-size:9px; font-weight:500;
     color:var(--ink-dim); letter-spacing:.12em; text-transform:uppercase;
-    text-align:right; line-height:1.4; flex-shrink:0;
-    max-width:110px;
+    text-align:left; line-height:1.4; flex-shrink:0;
+    max-width:260px;
+    transition:font-size .22s ease, opacity .18s ease, max-height .22s ease;
+    max-height:40px;
+    overflow:hidden;
+  }
+  .masthead.compact {
+    padding:calc(var(--safe-top) + 10px) 22px 8px;
+    background:linear-gradient(180deg, rgba(255,248,239,.98) 0%, rgba(255,248,239,.92) 78%, rgba(255,248,239,.68) 100%);
+    box-shadow:0 8px 24px -22px rgba(20,12,2,.18);
+  }
+  .masthead.compact .masthead-top {
+    opacity:0;
+    transform:translateY(-8px);
+    max-height:0;
+    padding-bottom:0;
+    margin-bottom:0;
+    border-bottom-color:transparent;
+  }
+  .masthead.compact .wordmark {
+    padding-top:0;
+    gap:0;
+  }
+  .masthead.compact .wordmark h1 {
+    font-size:30px;
+    letter-spacing:-.03em;
+  }
+  .masthead.compact .wordmark-sub {
+    font-size:8px;
+    opacity:.82;
+    max-height:14px;
   }
 
   /* status chip */
@@ -920,6 +955,7 @@
     .wordmark h1 { font-size:48px; }
     .hero-display { font-size:96px; }
     .canvas { padding:22px 22px calc(var(--safe-bot) + 110px); }
+    .masthead.compact .wordmark h1 { font-size:34px; }
   }
 </style>
 </head>
@@ -943,8 +979,8 @@
       <div class="issue-meta">Combustion Journal</div>
     </div>
     <div class="wordmark">
-      <h1>Fuel<span class="amp">&amp;</span>Log</h1>
-      <div class="wordmark-sub">A field ledger for internal combustion</div>
+      <h1>Lube<span class="brand-accent">App</span></h1>
+      <div class="wordmark-sub">Lubelogger scan tickets and odometer</div>
     </div>
   </header>
 
@@ -1890,6 +1926,15 @@ function showToast(msg) {
   t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
+
+const mastheadEl = document.querySelector('.masthead');
+function syncMastheadCompact() {
+  if (!mastheadEl) return;
+  mastheadEl.classList.toggle('compact', window.scrollY > 24);
+}
+
+window.addEventListener('scroll', syncMastheadCompact, { passive:true });
+syncMastheadCompact();
 </script>
 </body>
 </html>
