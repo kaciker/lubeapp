@@ -289,11 +289,17 @@ class ConfigBody(BaseModel):
 # ---------------------------------------------------------------------------
 
 HTML_FILE = os.path.join(os.path.dirname(__file__), "index.html")
+FAVICON_FILE = os.path.join(os.path.dirname(__file__), "favicon.svg")
 
 @app.get("/")
 def serve_frontend():
     return FileResponse(HTML_FILE, media_type="text/html",
                         headers={"Cache-Control": "no-cache, must-revalidate"})
+
+
+@app.get("/favicon.svg")
+def serve_favicon():
+    return FileResponse(FAVICON_FILE, media_type="image/svg+xml")
 
 
 @app.get("/api/health")
