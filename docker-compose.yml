@@ -5,9 +5,13 @@ services:
       dockerfile: api/Dockerfile
     container_name: lubeapp
     restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8087 --reload
     env_file: .env
     ports:
       - "8087:8087"
     volumes:
       - ./data:/data
       - ./index.html:/app/index.html:ro
+      - ./favicon.svg:/app/favicon.svg:ro
+      - ./apple-touch-icon.png:/app/apple-touch-icon.png:ro
+      - ./api/main.py:/app/main.py:ro

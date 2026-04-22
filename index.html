@@ -1259,6 +1259,7 @@ let currentResult = null;
 let selectedModel = 'google/gemini-2.0-flash-001';
 let gpsCoords = null;
 let openHistorySwipeRow = null;
+let historyRecordsById = {};
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 const savedVehicle = localStorage.getItem('vehicle_name');
@@ -1592,6 +1593,7 @@ async function renderHistory() {
     // stats
     const totalSpent  = history.reduce((s,r) => s + (Number(r.importe_total)||0), 0);
     const totalLiters = history.reduce((s,r) => s + (Number(r.litros)||0), 0);
+    historyRecordsById = Object.fromEntries(history.map(item => [String(item._id), item]));
     document.getElementById('statCount').textContent  = history.length;
     document.getElementById('statSpent').textContent  = totalSpent.toFixed(0);
     document.getElementById('statLiters').textContent = totalLiters.toFixed(0);
@@ -1600,7 +1602,7 @@ async function renderHistory() {
     list.innerHTML = history.map(item => `
       <div class="history-swipe" data-record-id="${item._id}">
         <button class="history-swipe-action" onclick="deleteRecord(event,'${item._id}')">Borrar</button>
-        <div class="history-item" data-record-id="${item._id}" onclick='loadHistoryItem(${JSON.stringify(item).replace(/'/g,"&#39;")})'>
+        <div class="history-item" data-record-id="${item._id}" onclick="loadHistoryItemById('${item._id}')">
           <div class="history-left">
             <div class="history-date">${item.fecha || 'Sin fecha'} · ${item.hora || ''}</div>
             <div class="history-cost">${item.importe_total != null ? Number(item.importe_total).toFixed(2) + ' €' : '—'}</div>
@@ -1616,6 +1618,15 @@ async function renderHistory() {
   } catch {
     list.innerHTML = '<div class="empty-history">Error al cargar el historial</div>';
   }
+}
+
+function loadHistoryItemById(id) {
+  const item = historyRecordsById[String(id)];
+  if (!item) {
+    showToast('No se pudo abrir el ticket');
+    return;
+  }
+  loadHistoryItem(item);
 }
 
 function loadHistoryItem(item) {
