@@ -232,7 +232,7 @@
     max-height:0;
     overflow:hidden;
   }
-  .masthead.compact .masthead-mini {
+  body.masthead-compact .masthead-mini {
     opacity:1;
     transform:translateY(0);
     max-height:54px;
@@ -1025,12 +1025,13 @@
 
 <div class="shell">
 
+  <div class="masthead-mini" id="mastheadMini">
+    <div class="masthead-mini-title">Lube<span class="brand-accent">App</span></div>
+    <div class="masthead-mini-tag">Scan tickets and odometer</div>
+  </div>
+
   <!-- ── MASTHEAD ── -->
   <header class="masthead">
-    <div class="masthead-mini">
-      <div class="masthead-mini-title">Lube<span class="brand-accent">App</span></div>
-      <div class="masthead-mini-tag">Scan tickets and odometer</div>
-    </div>
     <div class="status-chip checking" id="statusBadge">
       <span class="chip-dot"></span>
       <span id="statusBadgeText">Conectando</span>
@@ -1995,8 +1996,9 @@ function showToast(msg) {
 
 const mastheadEl = document.querySelector('.masthead');
 function syncMastheadCompact() {
-  if (!mastheadEl) return;
-  mastheadEl.classList.toggle('compact', window.scrollY > 24);
+  const compact = window.scrollY > 24;
+  if (mastheadEl) mastheadEl.classList.toggle('compact', compact);
+  document.body.classList.toggle('masthead-compact', compact);
 }
 
 window.addEventListener('scroll', syncMastheadCompact, { passive:true });
