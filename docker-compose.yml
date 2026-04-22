@@ -1,0 +1,13 @@
+services:
+  lubeapp:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: lubeapp
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8087:8087"
+    volumes:
+      - ./data:/data
+      - ./index.html:/app/index.html:ro
