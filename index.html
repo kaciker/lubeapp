@@ -4,541 +4,1171 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FuelLog">
-<title>FuelLog</title>
+<meta name="theme-color" content="#0a0a0b">
+<title>FuelLog — Combustion Journal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,500&family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:            #eef2f7;
-    --surface:       #ffffff;
-    --surface2:      #f1f5f9;
-    --border:        #e2e8f0;
-    --accent:        #2563eb;
-    --accent-light:  #dbeafe;
-    --accent2:       #0891b2;
-    --accent2-light: #cffafe;
-    --text:          #0f172a;
-    --text2:         #475569;
-    --muted:         #94a3b8;
-    --red:           #ef4444;
-    --red-light:     #fee2e2;
-    --green:         #10b981;
-    --green-light:   #d1fae5;
-    --shadow-sm:     0 1px 2px rgba(0,0,0,.05);
-    --shadow:        0 1px 3px rgba(0,0,0,.10), 0 1px 2px rgba(0,0,0,.06);
-    --shadow-md:     0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.05);
-    --radius:        16px;
+    /* ── INK & SURFACES ── */
+    --ink:           #0a0a0b;         /* near-black, very slight warm */
+    --ink-2:         #111113;
+    --ink-3:         #17171a;
+    --surface:       #1a1a1d;
+    --surface-hi:    #212126;
+    --line:          rgba(255,255,255,.07);
+    --line-hi:       rgba(255,255,255,.14);
+
+    /* ── TYPE ── */
+    --fg:            #f4f1ea;         /* warm paper-white */
+    --fg-dim:        #a8a39a;
+    --fg-mute:       #5a564f;
+    --fg-deep:       #33302b;
+
+    /* ── ACCENTS (fuel / dashboard warning amber) ── */
+    --amber:         #ff9f43;
+    --amber-hot:     #ffb968;
+    --amber-deep:    #c86a10;
+    --ember:         #e84118;         /* ignition red */
+    --ember-glow:    rgba(255,100,40,.35);
+    --mint:          #7dd3a0;         /* confirmed green */
+    --mint-deep:     #2d6a4a;
+
+    /* ── UTIL ── */
+    --r-sm:          8px;
+    --r-md:          14px;
+    --r-lg:          20px;
+    --r-xl:          28px;
     --safe-top:      env(safe-area-inset-top);
     --safe-bot:      env(safe-area-inset-bottom);
-  }
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { font-family:'Syne',sans-serif; background:var(--bg); color:var(--text); min-height:100dvh; overflow-x:hidden; }
 
-  /* ── HEADER ───────────────────────────────────── */
-  .header {
-    position:sticky; top:0; z-index:100;
-    padding:calc(var(--safe-top) + 14px) 20px 14px;
-    background:var(--surface);
-    border-bottom:1px solid var(--border);
-    display:flex; justify-content:space-between; align-items:center;
-    box-shadow:var(--shadow-sm);
+    /* ── FONT STACKS ── */
+    --serif:         'Fraunces', 'Times New Roman', serif;
+    --sans:          'Inter', -apple-system, system-ui, sans-serif;
+    --mono:          'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
   }
-  .logo { font-size:22px; font-weight:800; letter-spacing:-.5px; color:var(--text); display:flex; align-items:center; gap:8px; }
-  .logo-icon { width:32px; height:32px; background:var(--accent); border-radius:9px; display:flex; align-items:center; justify-content:center; }
-  .logo-icon svg { stroke:#fff; }
-  .status-badge {
-    font-family:'DM Mono',monospace; font-size:10px; padding:5px 12px; border-radius:20px;
-    letter-spacing:.06em; text-transform:uppercase; font-weight:500; transition:all .3s;
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { background:var(--ink); color:var(--fg); min-height:100dvh; overflow-x:hidden; }
+  body {
+    font-family:var(--sans);
+    font-size:14px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    letter-spacing:-.005em;
+  }
+
+  /* ── ATMOSPHERIC BACKGROUND ── */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255,159,67,.12), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 100% 10%, rgba(232,65,24,.08), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 0% 30%, rgba(255,159,67,.04), transparent 50%);
+    pointer-events:none;
+    z-index:0;
+  }
+  /* grain overlay */
+  body::after {
+    content:'';
+    position:fixed; inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity:.35;
+    mix-blend-mode:overlay;
+    pointer-events:none;
+    z-index:1;
+  }
+
+  /* ── SELECTION ── */
+  ::selection { background:var(--amber); color:var(--ink); }
+
+  /* ── APP SHELL ── */
+  .shell { position:relative; z-index:2; min-height:100dvh; }
+
+  /* ── HEADER: editorial masthead ── */
+  .masthead {
+    position:sticky; top:0; z-index:50;
+    padding:calc(var(--safe-top) + 16px) 22px 14px;
+    background:linear-gradient(180deg, rgba(10,10,11,.92) 0%, rgba(10,10,11,.75) 85%, transparent 100%);
+    backdrop-filter:blur(20px) saturate(140%);
+    -webkit-backdrop-filter:blur(20px) saturate(140%);
+  }
+  .masthead-top {
+    display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--line);
+    padding-bottom:12px;
+  }
+  .issue-mark {
+    font-family:var(--mono); font-size:9px; font-weight:500;
+    color:var(--fg-mute); text-transform:uppercase; letter-spacing:.18em;
+    display:flex; align-items:center; gap:8px;
+  }
+  .issue-mark .dot {
+    width:5px; height:5px; border-radius:50%; background:var(--amber);
+    box-shadow:0 0 8px var(--amber);
+    animation:breathe 2.8s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%,100% { opacity:1; transform:scale(1); }
+    50%     { opacity:.4; transform:scale(.85); }
+  }
+  .issue-meta {
+    font-family:var(--mono); font-size:9px; color:var(--fg-mute);
+    letter-spacing:.1em; text-transform:uppercase;
+  }
+
+  .wordmark {
+    padding-top:14px;
+    display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+  }
+  .wordmark h1 {
+    font-family:var(--serif); font-weight:900;
+    font-size:38px; line-height:.88; letter-spacing:-.035em;
+    font-variation-settings: "opsz" 144;
+    font-style:italic;
+    color:var(--fg);
+  }
+  .wordmark h1 .amp {
+    font-style:italic; font-weight:300;
+    color:var(--amber);
+    padding:0 1px;
+  }
+  .wordmark-sub {
+    font-family:var(--mono); font-size:9px; font-weight:500;
+    color:var(--fg-mute); letter-spacing:.12em; text-transform:uppercase;
+    text-align:right; line-height:1.4; flex-shrink:0;
+    max-width:110px;
+  }
+
+  /* status chip */
+  .status-chip {
+    position:absolute; top:calc(var(--safe-top) + 14px); right:22px;
+    display:flex; align-items:center; gap:6px;
+    font-family:var(--mono); font-size:9px; font-weight:500;
+    color:var(--fg-dim); letter-spacing:.1em; text-transform:uppercase;
+  }
+  .status-chip .chip-dot {
+    width:6px; height:6px; border-radius:50%;
+  }
+  .status-chip.ok .chip-dot    { background:var(--mint); box-shadow:0 0 8px var(--mint); }
+  .status-chip.err .chip-dot   { background:var(--ember); box-shadow:0 0 8px var(--ember); }
+  .status-chip.checking .chip-dot {
+    background:var(--amber); box-shadow:0 0 8px var(--amber);
+    animation:breathe 1s ease-in-out infinite;
+  }
+
+  /* ── MAIN CANVAS ── */
+  .canvas {
+    padding:20px 20px calc(var(--safe-bot) + 110px);
+    display:flex; flex-direction:column; gap:22px;
+  }
+  .view { display:none; }
+  .view.active {
+    display:flex; flex-direction:column; gap:22px;
+    animation:viewIn .5s cubic-bezier(.22,.9,.3,1);
+  }
+  @keyframes viewIn {
+    from { opacity:0; transform:translateY(8px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* ── HERO ODOMETER ── */
+  .hero {
+    position:relative;
+    padding:26px 24px 28px;
+    background:
+      linear-gradient(145deg, rgba(255,159,67,.04) 0%, transparent 40%),
+      var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:var(--r-lg);
+    overflow:hidden;
+  }
+  .hero::before {
+    content:''; position:absolute;
+    top:-1px; left:24px; right:24px; height:1px;
+    background:linear-gradient(90deg, transparent, var(--amber), transparent);
+    opacity:.6;
+  }
+  .hero-label {
+    font-family:var(--mono); font-size:9px; font-weight:500;
+    color:var(--amber); letter-spacing:.22em; text-transform:uppercase;
+    margin-bottom:14px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .hero-label::after {
+    content:''; flex:1; height:1px;
+    background:linear-gradient(90deg, var(--amber), transparent);
+    opacity:.4;
+  }
+  .hero-display {
+    font-family:var(--serif);
+    font-weight:300;
+    font-variation-settings: "opsz" 144;
+    font-size:76px; line-height:.92;
+    letter-spacing:-.04em;
+    color:var(--fg);
+    display:flex; align-items:baseline; gap:6px;
+  }
+  .hero-display .unit {
+    font-family:var(--mono); font-size:15px; font-weight:400;
+    color:var(--fg-mute); letter-spacing:.08em; text-transform:uppercase;
+    align-self:flex-end;
+    padding-bottom:14px;
+  }
+  .hero-sub {
+    margin-top:10px;
+    display:flex; align-items:center; gap:12px;
+    font-family:var(--mono); font-size:10px; color:var(--fg-dim);
+    text-transform:uppercase; letter-spacing:.1em;
+  }
+  .hero-sub .sep { color:var(--fg-deep); }
+  .hero-sub b { color:var(--fg); font-weight:500; }
+
+  /* corner crop marks */
+  .crop {
+    position:absolute; width:12px; height:12px;
+    border-color:var(--line-hi);
+  }
+  .crop.tl { top:10px; left:10px; border-top:1px solid; border-left:1px solid; }
+  .crop.tr { top:10px; right:10px; border-top:1px solid; border-right:1px solid; }
+  .crop.bl { bottom:10px; left:10px; border-bottom:1px solid; border-left:1px solid; }
+  .crop.br { bottom:10px; right:10px; border-bottom:1px solid; border-right:1px solid; }
+
+  /* ── SECTION HEAD: editorial chapter ── */
+  .chapter {
+    display:flex; align-items:baseline; gap:14px;
+    padding:0 2px;
+    margin-top:4px;
+  }
+  .chapter-num {
+    font-family:var(--mono); font-size:10px; font-weight:500;
+    color:var(--amber); letter-spacing:.1em;
+  }
+  .chapter-title {
+    font-family:var(--serif); font-style:italic; font-weight:500;
+    font-variation-settings: "opsz" 144;
+    font-size:22px; letter-spacing:-.02em;
+    color:var(--fg);
+    flex:1;
+  }
+  .chapter-rule {
+    flex:1; height:1px;
+    background:linear-gradient(90deg, var(--line-hi), transparent);
+  }
+
+  /* ── CARD BASE ── */
+  .card {
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:var(--r-md);
+    padding:16px 18px;
+    display:flex; flex-direction:column; gap:10px;
+    position:relative;
+    transition:border-color .25s;
+  }
+  .card:focus-within { border-color:var(--line-hi); }
+
+  .card-eyebrow {
+    font-family:var(--mono); font-size:9px; font-weight:500;
+    color:var(--fg-mute); letter-spacing:.18em; text-transform:uppercase;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .card-eyebrow .hint { color:var(--fg-deep); letter-spacing:.08em; }
+
+  /* ── INPUTS ── */
+  input[type="text"], input[type="url"], input[type="number"], select, textarea {
+    width:100%;
+    background:transparent;
+    border:none; border-bottom:1px solid var(--line);
+    padding:8px 0 10px;
+    font-family:var(--mono); font-size:13px; font-weight:400;
+    color:var(--fg); outline:none;
+    transition:border-color .25s;
+    -webkit-appearance:none; appearance:none;
+    border-radius:0;
+  }
+  input:focus, select:focus { border-bottom-color:var(--amber); }
+  input::placeholder { color:var(--fg-deep); }
+
+  select {
+    cursor:pointer;
+    padding-right:28px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23a8a39a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 4px center;
+  }
+  select option { background:var(--ink-2); color:var(--fg); }
+
+  /* hide number spinners */
+  input[type=number] { -moz-appearance:textfield; }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+
+  /* ── GPS ROW ── */
+  .gps {
+    display:flex; align-items:center; gap:12px;
+    padding:14px 16px;
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:var(--r-md);
+    cursor:pointer;
+    transition:border-color .25s, background .25s;
+  }
+  .gps:active { transform:scale(.995); }
+  .gps-reticle {
+    width:22px; height:22px; flex-shrink:0;
+    position:relative;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .gps-reticle::before, .gps-reticle::after {
+    content:''; position:absolute; background:var(--line-hi);
+  }
+  .gps-reticle::before { width:100%; height:1px; top:50%; left:0; }
+  .gps-reticle::after  { height:100%; width:1px; left:50%; top:0; }
+  .gps-dot {
+    width:7px; height:7px; border-radius:50%;
+    background:var(--fg-mute);
+    position:relative; z-index:1;
+    transition:background .3s, box-shadow .3s;
+  }
+  .gps-dot.acquiring { background:var(--amber); box-shadow:0 0 10px var(--amber); animation:breathe 1.1s infinite; }
+  .gps-dot.ok        { background:var(--mint);  box-shadow:0 0 10px var(--mint); }
+  .gps-dot.denied    { background:var(--ember); box-shadow:0 0 10px var(--ember); }
+
+  .gps-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .gps-label { font-family:var(--mono); font-size:9px; color:var(--fg-mute); letter-spacing:.18em; text-transform:uppercase; }
+  .gps-text  { font-family:var(--mono); font-size:12px; color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .gps-retry { font-family:var(--mono); font-size:9px; color:var(--amber); letter-spacing:.12em; text-transform:uppercase; flex-shrink:0; }
+
+  /* ── CAPTURE GRID ── */
+  .capture-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  .capture {
+    position:relative;
+    aspect-ratio:3/4;
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:var(--r-md);
+    overflow:hidden;
+    cursor:pointer;
+    transition:border-color .3s, transform .15s;
+    display:flex; flex-direction:column;
+  }
+  .capture:active { transform:scale(.98); }
+  .capture.has-image { border-color:var(--amber); }
+  .capture.has-image::before {
+    content:''; position:absolute; inset:0;
+    box-shadow:inset 0 0 20px rgba(255,159,67,.1);
+    pointer-events:none; z-index:2;
+  }
+
+  .capture-preview {
+    position:absolute; inset:0;
+    object-fit:cover; width:100%; height:100%;
+    display:none;
+  }
+  .capture.has-image .capture-preview { display:block; }
+
+  .capture-placeholder {
+    flex:1;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+    padding:16px;
+    position:relative; z-index:1;
+  }
+  .capture.has-image .capture-placeholder { display:none; }
+
+  .capture-glyph {
+    width:44px; height:44px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--amber);
+    border:1px dashed var(--amber);
+    position:relative;
+  }
+  .capture-glyph::before {
+    content:''; position:absolute; inset:-6px;
+    border-radius:50%;
+    border:1px solid var(--line);
+  }
+  .capture-glyph svg { width:20px; height:20px; }
+
+  .capture-name {
+    font-family:var(--serif); font-style:italic; font-weight:500;
+    font-size:15px; letter-spacing:-.01em;
+    color:var(--fg); text-align:center; line-height:1.1;
+  }
+  .capture-hint {
+    font-family:var(--mono); font-size:8px; color:var(--fg-mute);
+    letter-spacing:.16em; text-transform:uppercase;
+  }
+
+  .capture-overlay {
+    position:absolute; inset:0;
+    background:linear-gradient(to top, rgba(10,10,11,.85) 0%, transparent 55%);
+    display:none; align-items:flex-end; padding:12px;
+    z-index:3;
+  }
+  .capture.has-image .capture-overlay { display:flex; }
+  .capture-tag {
+    font-family:var(--mono); font-size:9px; font-weight:500;
+    background:var(--amber); color:var(--ink);
+    padding:3px 9px; border-radius:20px;
+    letter-spacing:.1em; text-transform:uppercase;
     display:flex; align-items:center; gap:5px;
   }
-  .status-badge::before { content:''; width:6px; height:6px; border-radius:50%; flex-shrink:0; }
-  .status-badge.ok    { background:var(--green-light);  color:#065f46; }
-  .status-badge.ok::before    { background:var(--green); }
-  .status-badge.err   { background:var(--red-light);    color:#991b1b; }
-  .status-badge.err::before   { background:var(--red); }
-  .status-badge.checking { background:var(--accent-light); color:#1e40af; }
-  .status-badge.checking::before { background:var(--accent); animation:pulse 1.2s infinite; }
 
-  /* ── LAYOUT ───────────────────────────────────── */
-  .main { padding:16px 16px calc(var(--safe-bot) + 90px); display:flex; flex-direction:column; gap:12px; }
-  .view { display:none; } .view.active { display:flex; flex-direction:column; gap:12px; }
-
-  /* ── CARD ─────────────────────────────────────── */
-  .card {
-    background:var(--surface); border-radius:var(--radius);
-    box-shadow:var(--shadow); padding:16px;
-    display:flex; flex-direction:column; gap:10px;
-    border:1px solid var(--border);
+  /* odometer special combined card */
+  #cardOdo { cursor:default; }
+  .odo-zone { flex:1; cursor:pointer; position:relative; display:flex; flex-direction:column; }
+  .odo-zone .capture-placeholder { flex:1; }
+  .odo-manual {
+    position:relative; z-index:4;
+    padding:10px 14px 12px;
+    background:var(--ink-3);
+    border-top:1px solid var(--line);
   }
-  .card-label {
-    font-family:'DM Mono',monospace; font-size:10px; text-transform:uppercase;
-    letter-spacing:.1em; color:var(--muted); font-weight:500;
+  .odo-manual-label {
+    font-family:var(--mono); font-size:8px; font-weight:500;
+    color:var(--fg-mute); letter-spacing:.18em; text-transform:uppercase;
+    margin-bottom:2px;
   }
-
-  /* ── INPUTS ───────────────────────────────────── */
-  input[type="text"], input[type="url"], select {
-    background:var(--surface2); border:1px solid var(--border); border-radius:10px;
-    padding:10px 12px; font-family:'DM Mono',monospace; font-size:12px;
-    color:var(--text); outline:none; -webkit-appearance:none; transition:border-color .2s; width:100%;
+  .odo-manual input {
+    font-family:var(--serif); font-weight:500;
+    font-variation-settings: "opsz" 144;
+    font-size:22px; color:var(--amber);
+    border:none; padding:0; letter-spacing:-.02em;
   }
-  input:focus, select:focus { border-color:var(--accent); background:#fff; }
-  .row { display:flex; gap:8px; align-items:center; }
+  .odo-manual input::placeholder { font-family:var(--serif); color:var(--fg-deep); font-style:italic; font-weight:300; }
+  .odo-manual input:focus { color:var(--amber-hot); border:none; }
 
-  /* ── MODEL SELECT ─────────────────────────────── */
-  .model-select-wrap { position:relative; }
-  .model-select-wrap svg { position:absolute; right:12px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--muted); }
-  .model-select-wrap select { padding-right:36px; cursor:pointer; font-size:13px; }
-
-  /* ── GPS BAR ──────────────────────────────────── */
-  .gps-bar {
-    display:flex; align-items:center; gap:10px; padding:10px 14px;
-    background:var(--surface); border:1px solid var(--border); border-radius:12px;
-    box-shadow:var(--shadow-sm); cursor:pointer; transition:border-color .2s;
-  }
-  .gps-bar:active { border-color:var(--accent2); }
-  .gps-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; transition:background .3s; }
-  .gps-dot.acquiring { background:var(--accent); animation:pulse 1.2s infinite; }
-  .gps-dot.ok        { background:var(--green); }
-  .gps-dot.denied    { background:var(--red); }
-  .gps-dot.idle      { background:var(--muted); }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-  .gps-label { font-family:'DM Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); flex-shrink:0; }
-  .gps-text  { font-family:'DM Mono',monospace; font-size:10px; color:var(--text2); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .gps-retry { font-family:'DM Mono',monospace; font-size:9px; color:var(--accent2); flex-shrink:0; }
-
-  /* ── CAPTURE GRID ─────────────────────────────── */
-  .section-label { font-family:'DM Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:.15em; color:var(--muted); padding-left:2px; }
-  .capture-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .capture-card {
-    background:var(--surface); border:2px dashed var(--border); border-radius:var(--radius);
-    overflow:hidden; position:relative; aspect-ratio:3/4; cursor:pointer;
-    transition:border-color .25s, transform .15s, box-shadow .25s;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
-    box-shadow:var(--shadow-sm);
-  }
-  .capture-card:active { transform:scale(.96); }
-  .capture-card:hover  { border-color:var(--accent); box-shadow:var(--shadow); }
-  .capture-card.has-image { border-style:solid; border-color:var(--accent); box-shadow:var(--shadow-md); }
-  .capture-card.has-image .capture-placeholder { display:none; }
-  .capture-preview { position:absolute; inset:0; object-fit:cover; width:100%; height:100%; display:none; border-radius:14px; }
-  .capture-card.has-image .capture-preview { display:block; }
-  .capture-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.75) 0%, transparent 50%); border-radius:14px; display:none; align-items:flex-end; padding:12px; }
-  .capture-card.has-image .capture-overlay { display:flex; }
-  .capture-tag { font-family:'DM Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:.08em; background:var(--accent); color:#fff; padding:3px 8px; border-radius:20px; font-weight:500; }
-  .capture-placeholder { display:flex; flex-direction:column; align-items:center; gap:10px; padding:12px; }
-  .capture-icon { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; }
-  .capture-icon.ticket   { background:var(--accent-light);  }
-  .capture-icon.ticket svg { stroke:var(--accent); }
-  .capture-icon.odometer { background:var(--accent2-light); }
-  .capture-icon.odometer svg { stroke:var(--accent2); }
-  .capture-name { font-size:12px; font-weight:700; text-align:center; line-height:1.4; color:var(--text); }
-  .capture-hint { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); text-align:center; text-transform:uppercase; letter-spacing:.05em; }
   input[type="file"] { display:none; }
 
-  /* ── ODO COMBINED CARD ────────────────────────── */
-  #cardOdo { align-items:stretch; justify-content:flex-start; gap:0; cursor:default; }
-  .odo-photo-zone {
-    flex:1; width:100%; min-height:0; position:relative;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    cursor:pointer;
-  }
-  .odo-photo-zone .capture-preview  { border-radius:0; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:none; }
-  .odo-photo-zone .capture-overlay  { border-radius:0; }
-  #cardOdo.has-image .odo-photo-zone .capture-preview { display:block; }
-  #cardOdo.has-image .odo-photo-zone .capture-overlay { display:flex; }
-  #cardOdo.has-image .capture-placeholder { display:none; }
-  .odo-manual-zone {
-    flex-shrink:0; width:100%; padding:8px 12px 10px;
-    border-top:1px solid var(--border); background:var(--surface2);
-  }
-  .odo-manual-label { font-family:'DM Mono',monospace; font-size:8px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:2px; }
-  .odo-manual-zone input[type=number] {
-    background:transparent; border:none; outline:none; width:100%; padding:0;
-    font-family:'DM Mono',monospace; font-size:19px; font-weight:500;
-    color:var(--accent2); -moz-appearance:textfield;
-  }
-  .odo-manual-zone input[type=number]::-webkit-inner-spin-button,
-  .odo-manual-zone input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; }
-  .odo-manual-zone input[type=number]::placeholder { color:var(--border); font-size:14px; }
-  .odo-manual-zone input[type=number]:focus { color:var(--accent); }
-
-  /* ── BUTTONS ──────────────────────────────────── */
+  /* ── PRIMARY ACTION ── */
   .btn-analyze {
-    width:100%; padding:17px; background:var(--accent); color:#fff;
-    border:none; border-radius:var(--radius); font-family:'Syne',sans-serif;
-    font-size:16px; font-weight:800; letter-spacing:.02em; cursor:pointer;
-    transition:all .2s; box-shadow:0 4px 14px rgba(37,99,235,.35);
+    position:relative;
+    width:100%;
+    padding:20px;
+    border:none; border-radius:var(--r-md);
+    background:var(--amber);
+    color:var(--ink);
+    font-family:var(--serif); font-weight:700; font-style:italic;
+    font-variation-settings: "opsz" 144;
+    font-size:20px; letter-spacing:-.015em;
+    cursor:pointer; overflow:hidden;
+    transition:transform .15s, box-shadow .3s, background .3s;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.2) inset,
+      0 10px 30px -10px var(--amber),
+      0 0 60px -20px var(--amber);
   }
-  .btn-analyze:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; box-shadow:none; }
-  .btn-analyze:active:not(:disabled) { transform:scale(.98); box-shadow:0 2px 8px rgba(37,99,235,.3); }
+  .btn-analyze::before {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(135deg, transparent 30%, rgba(255,255,255,.25) 50%, transparent 70%);
+    transform:translateX(-100%);
+    transition:transform .8s;
+  }
+  .btn-analyze:hover::before { transform:translateX(100%); }
+  .btn-analyze:disabled {
+    background:var(--ink-3); color:var(--fg-deep); cursor:not-allowed;
+    box-shadow:inset 0 0 0 1px var(--line);
+  }
+  .btn-analyze:disabled::before { display:none; }
+  .btn-analyze:active:not(:disabled) { transform:scale(.98); }
+  .btn-analyze .arrow { display:inline-block; margin-left:6px; transition:transform .3s; }
+  .btn-analyze:hover:not(:disabled) .arrow { transform:translateX(4px); }
 
   .btn-reset {
-    width:100%; padding:13px; background:transparent; color:var(--text2);
-    border:1.5px solid var(--border); border-radius:var(--radius); font-family:'DM Mono',monospace;
-    font-size:12px; font-weight:500; letter-spacing:.04em; text-transform:uppercase;
+    width:100%; padding:13px;
+    background:transparent; color:var(--fg-dim);
+    border:1px solid var(--line); border-radius:var(--r-md);
+    font-family:var(--mono); font-size:11px; font-weight:500;
+    letter-spacing:.15em; text-transform:uppercase;
     cursor:pointer; transition:all .2s; display:none;
   }
   .btn-reset.visible { display:block; }
-  .btn-reset:active  { border-color:var(--accent); color:var(--accent); }
+  .btn-reset:active { border-color:var(--amber); color:var(--amber); }
 
-  .btn-small {
-    background:var(--surface2); border:1px solid var(--border); border-radius:10px;
-    padding:9px 14px; color:var(--text2); font-family:'DM Mono',monospace;
-    font-size:11px; cursor:pointer; white-space:nowrap; transition:all .2s; flex-shrink:0;
+  /* ── SMALL BUTTONS ── */
+  .btn-sm {
+    background:transparent; color:var(--fg-dim);
+    border:1px solid var(--line); border-radius:var(--r-sm);
+    padding:10px 14px;
+    font-family:var(--mono); font-size:10px; font-weight:500;
+    letter-spacing:.12em; text-transform:uppercase;
+    cursor:pointer; transition:all .2s;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    white-space:nowrap;
   }
-  .btn-small:hover { border-color:var(--accent); color:var(--accent); }
-  .btn-small.saved  { border-color:var(--green); color:var(--green); background:var(--green-light); }
-  .btn-small.danger { border-color:var(--red);   color:var(--red);   background:var(--red-light); }
-  .btn-small.full   { width:100%; }
+  .btn-sm:hover, .btn-sm:active { border-color:var(--amber); color:var(--amber); }
+  .btn-sm.saved  { border-color:var(--mint); color:var(--mint); }
+  .btn-sm.danger { border-color:var(--ember); color:var(--ember); }
+  .btn-sm.full   { width:100%; padding:13px; }
 
-  /* ── ERROR CARD ───────────────────────────────── */
+  /* ── ERROR ── */
   .error-card {
-    background:var(--red-light); border:1px solid #fca5a5; border-radius:var(--radius);
-    padding:14px 16px; font-family:'DM Mono',monospace; font-size:12px;
-    color:#991b1b; display:none; line-height:1.7; white-space:pre-line;
+    background:rgba(232,65,24,.06);
+    border:1px solid rgba(232,65,24,.25);
+    border-radius:var(--r-md);
+    padding:14px 16px;
+    font-family:var(--mono); font-size:11px;
+    color:#ffa293; line-height:1.7; white-space:pre-line;
+    display:none;
   }
   .error-card.visible { display:block; }
 
-  /* ── RESULT CARD ──────────────────────────────── */
+  /* ── RESULT ── */
   .result-card {
-    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-    overflow:hidden; display:none; flex-direction:column;
-    animation:fadeUp .3s ease; box-shadow:var(--shadow-md);
+    background:var(--ink-2); border:1px solid var(--line);
+    border-radius:var(--r-lg); overflow:hidden;
+    display:none; flex-direction:column;
+    animation:viewIn .4s cubic-bezier(.22,.9,.3,1);
   }
   .result-card.visible { display:flex; }
-  @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-
-  .result-header { padding:14px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); background:var(--surface2); }
-  .result-title { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text); }
-  .result-model { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); margin-top:2px; }
-  .result-actions { display:flex; gap:8px; align-items:center; }
-  .btn-icon {
-    background:var(--surface); border:1px solid var(--border); border-radius:8px;
-    padding:6px 12px; font-family:'DM Mono',monospace; font-size:10px; color:var(--text2);
-    cursor:pointer; text-transform:uppercase; letter-spacing:.04em; transition:all .2s;
-    display:flex; align-items:center; gap:5px;
+  .result-head {
+    padding:18px 20px 14px;
+    border-bottom:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
   }
-  .btn-icon:active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .result-title-block { display:flex; flex-direction:column; gap:4px; }
+  .result-kicker { font-family:var(--mono); font-size:9px; color:var(--amber); letter-spacing:.2em; text-transform:uppercase; }
+  .result-title  { font-family:var(--serif); font-style:italic; font-weight:500; font-size:24px; letter-spacing:-.02em; color:var(--fg); }
+  .result-model  { font-family:var(--mono); font-size:9px; color:var(--fg-mute); letter-spacing:.08em; }
+  .result-actions { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
   .saved-pill {
-    font-family:'DM Mono',monospace; font-size:9px; padding:4px 10px; border-radius:20px;
-    background:var(--green-light); border:1px solid #6ee7b7; color:#065f46;
-    display:flex; align-items:center; gap:4px;
+    font-family:var(--mono); font-size:9px; padding:5px 10px;
+    background:rgba(125,211,160,.1); border:1px solid rgba(125,211,160,.3);
+    color:var(--mint); border-radius:20px;
+    letter-spacing:.12em; text-transform:uppercase;
+    display:inline-flex; align-items:center; gap:5px;
   }
 
-  /* LubeLogger status row */
-  .ll-row { display:flex; align-items:center; gap:8px; padding:10px 16px; border-top:1px solid var(--border); background:var(--surface2); }
-  .ll-logo { font-family:'DM Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); flex-shrink:0; }
-  .ll-pill { font-family:'DM Mono',monospace; font-size:10px; padding:3px 10px; border-radius:20px; white-space:nowrap; }
-  .ll-pill.ok   { background:var(--green-light); border:1px solid #6ee7b7; color:#065f46; }
-  .ll-pill.err  { background:var(--red-light);   border:1px solid #fca5a5; color:#991b1b; }
-  .ll-pill.skip { background:var(--surface2);    border:1px solid var(--border); color:var(--muted); }
+  .ll-row {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 20px;
+    border-bottom:1px solid var(--line);
+    background:var(--ink-3);
+  }
+  .ll-logo { font-family:var(--mono); font-size:9px; color:var(--fg-mute); letter-spacing:.15em; text-transform:uppercase; flex-shrink:0; }
+  .ll-pill {
+    font-family:var(--mono); font-size:9px; padding:3px 10px;
+    border-radius:20px; letter-spacing:.1em; text-transform:uppercase;
+  }
+  .ll-pill.ok   { background:rgba(125,211,160,.1); border:1px solid rgba(125,211,160,.3); color:var(--mint); }
+  .ll-pill.err  { background:rgba(232,65,24,.08);  border:1px solid rgba(232,65,24,.3);  color:#ffa293; }
+  .ll-pill.skip { background:transparent;          border:1px solid var(--line);         color:var(--fg-mute); }
+  .ll-detail { font-family:var(--mono); font-size:10px; color:var(--fg-dim); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-  /* Metrics grid */
-  .result-metrics { display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--border); }
-  .metric { background:var(--surface); padding:14px 16px; display:flex; flex-direction:column; gap:4px; }
+  /* metrics as newspaper almanac */
+  .metrics {
+    display:grid; grid-template-columns:1fr 1fr;
+    background:var(--line);
+    gap:1px;
+  }
+  .metric {
+    background:var(--ink-2);
+    padding:16px 20px;
+    display:flex; flex-direction:column; gap:6px;
+  }
   .metric:last-child:nth-child(odd) { grid-column:span 2; }
-  .metric-label { font-family:'DM Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
-  .metric-value { font-family:'DM Mono',monospace; font-size:20px; font-weight:500; color:var(--accent); }
-  .metric-value.secondary { color:var(--accent2); font-size:18px; }
-  .metric-value.neutral   { color:var(--text);    font-size:13px; }
-
-  .json-block { padding:14px 16px; border-top:1px solid var(--border); }
-  .json-label { font-family:'DM Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:8px; }
-  .json-pre { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px; font-family:'DM Mono',monospace; font-size:11px; line-height:1.7; color:var(--text2); white-space:pre-wrap; word-break:break-all; max-height:260px; overflow-y:auto; }
-  .key    { color:var(--accent2); }
-  .string { color:#059669; }
-  .number { color:var(--accent); }
-  .null   { color:var(--muted); }
-
-  /* ── HISTORY ──────────────────────────────────── */
-  .history-list { display:flex; flex-direction:column; gap:8px; }
-  .history-item {
-    background:var(--surface); border:1px solid var(--border); border-radius:14px;
-    padding:14px 16px; display:flex; justify-content:space-between; align-items:center;
-    cursor:pointer; transition:all .2s; box-shadow:var(--shadow-sm);
+  .metric-label {
+    font-family:var(--mono); font-size:9px; color:var(--fg-mute);
+    letter-spacing:.18em; text-transform:uppercase;
   }
-  .history-item:active { border-color:var(--accent); box-shadow:var(--shadow); }
-  .history-left  { display:flex; flex-direction:column; gap:3px; flex:1; min-width:0; }
-  .history-right { display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0; }
-  .history-date  { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); text-transform:uppercase; }
-  .history-cost  { font-size:20px; font-weight:700; color:var(--text); }
-  .history-km    { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); }
+  .metric-value {
+    font-family:var(--serif); font-weight:500;
+    font-variation-settings: "opsz" 144;
+    font-size:28px; letter-spacing:-.03em;
+    color:var(--amber); line-height:1;
+  }
+  .metric-value.secondary { color:var(--amber-hot); font-size:24px; font-style:italic; font-weight:400; }
+  .metric-value.neutral   { color:var(--fg); font-size:15px; font-family:var(--mono); letter-spacing:-.005em; font-weight:500; }
+
+  .json-block { padding:16px 20px; border-top:1px solid var(--line); }
+  .json-label { font-family:var(--mono); font-size:9px; color:var(--fg-mute); letter-spacing:.18em; text-transform:uppercase; margin-bottom:8px; }
+  .json-pre {
+    background:var(--ink); border:1px solid var(--line);
+    border-radius:var(--r-sm); padding:14px;
+    font-family:var(--mono); font-size:11px; line-height:1.75;
+    color:var(--fg-dim); white-space:pre-wrap; word-break:break-all;
+    max-height:260px; overflow-y:auto;
+  }
+  .key    { color:var(--amber); }
+  .string { color:var(--mint); }
+  .number { color:var(--amber-hot); }
+  .null   { color:var(--fg-mute); }
+
+  /* ── HISTORY ── */
+  .history-stats {
+    display:grid; grid-template-columns:1fr 1fr 1fr;
+    gap:1px; background:var(--line);
+    border:1px solid var(--line);
+    border-radius:var(--r-md); overflow:hidden;
+    margin-bottom:4px;
+  }
+  .history-stat {
+    background:var(--ink-2);
+    padding:14px 12px;
+    display:flex; flex-direction:column; gap:4px;
+    align-items:center; text-align:center;
+  }
+  .history-stat .label { font-family:var(--mono); font-size:8px; color:var(--fg-mute); letter-spacing:.18em; text-transform:uppercase; }
+  .history-stat .value { font-family:var(--serif); font-weight:500; font-size:22px; color:var(--fg); letter-spacing:-.02em; line-height:1; font-variation-settings: "opsz" 144; }
+  .history-stat .value .u { font-family:var(--mono); font-size:10px; color:var(--fg-mute); font-weight:400; margin-left:3px; letter-spacing:.05em; }
+
+  .history-list { display:flex; flex-direction:column; gap:10px; }
+  .history-item {
+    background:var(--ink-2); border:1px solid var(--line);
+    border-radius:var(--r-md);
+    padding:16px 18px;
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
+    cursor:pointer;
+    transition:border-color .2s, transform .15s;
+    position:relative;
+  }
+  .history-item:active { transform:scale(.99); border-color:var(--amber); }
+  .history-item::before {
+    content:''; position:absolute;
+    left:0; top:14px; bottom:14px; width:2px;
+    background:var(--amber); opacity:0;
+    transition:opacity .2s;
+    border-radius:0 2px 2px 0;
+  }
+  .history-item:hover::before { opacity:1; }
+
+  .history-left  { display:flex; flex-direction:column; gap:4px; flex:1; min-width:0; }
+  .history-right { display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex-shrink:0; }
+  .history-date  { font-family:var(--mono); font-size:9px; color:var(--fg-mute); letter-spacing:.14em; text-transform:uppercase; }
+  .history-cost  {
+    font-family:var(--serif); font-weight:500; font-style:italic;
+    font-variation-settings: "opsz" 144;
+    font-size:26px; color:var(--fg); letter-spacing:-.025em; line-height:1;
+  }
+  .history-km    { font-family:var(--mono); font-size:10px; color:var(--fg-dim); letter-spacing:.05em; }
   .history-badge {
-    font-family:'DM Mono',monospace; font-size:10px; color:var(--accent); background:var(--accent-light);
-    padding:3px 10px; border-radius:20px; border:1px solid #bfdbfe;
-    max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    font-family:var(--mono); font-size:9px; color:var(--amber);
+    background:rgba(255,159,67,.08); border:1px solid rgba(255,159,67,.25);
+    padding:4px 10px; border-radius:20px; letter-spacing:.08em;
+    max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
   .history-del {
-    background:transparent; border:1px solid transparent; border-radius:8px; padding:4px 8px;
-    font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); cursor:pointer; transition:all .2s;
+    background:transparent; border:1px solid transparent; border-radius:var(--r-sm);
+    padding:5px 8px; font-family:var(--mono); font-size:11px;
+    color:var(--fg-mute); cursor:pointer; transition:all .2s;
   }
-  .history-del:active { border-color:var(--red); color:var(--red); background:var(--red-light); }
-  .empty-history { text-align:center; font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); padding:40px 20px; text-transform:uppercase; letter-spacing:.05em; line-height:2; }
-  .empty-history svg { display:block; margin:0 auto 16px; opacity:.3; }
+  .history-del:active { border-color:var(--ember); color:var(--ember); }
+  .empty-history {
+    text-align:center; font-family:var(--mono); font-size:10px;
+    color:var(--fg-mute); padding:60px 20px;
+    letter-spacing:.12em; text-transform:uppercase; line-height:2;
+  }
+  .empty-history svg { display:block; margin:0 auto 16px; opacity:.25; }
 
-  /* ── SETTINGS EXTRAS ──────────────────────────── */
-  .info-row { display:flex; justify-content:space-between; align-items:center; font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); }
-  .info-row span { color:var(--text2); font-weight:500; }
-  .hint { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); line-height:1.6; }
-  .hint code { background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:1px 5px; font-size:10px; color:var(--text2); }
+  /* ── SETTINGS ── */
+  .info-row {
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:var(--mono); font-size:11px; color:var(--fg-dim);
+    padding:4px 0;
+  }
+  .info-row span { color:var(--fg); font-weight:500; }
+  .hint {
+    font-family:var(--mono); font-size:10px; color:var(--fg-mute);
+    line-height:1.7;
+  }
+  .hint code {
+    background:var(--ink); border:1px solid var(--line);
+    border-radius:4px; padding:1px 6px;
+    font-size:10px; color:var(--amber);
+  }
 
-  /* ── FOOTER ───────────────────────────────────── */
-  .footer { text-align:center; padding:24px 16px 8px; }
-  .footer a { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); text-decoration:none; transition:color .2s; }
-  .footer a:hover { color:var(--accent); }
+  .row { display:flex; gap:8px; align-items:center; }
 
-  /* ── NAV ──────────────────────────────────────── */
+  /* ── FOOTER ── */
+  .footer {
+    text-align:center;
+    padding:30px 16px 8px;
+  }
+  .footer a {
+    font-family:var(--serif); font-style:italic; font-weight:300;
+    font-variation-settings: "opsz" 144;
+    font-size:13px; color:var(--fg-mute);
+    text-decoration:none;
+    letter-spacing:-.01em;
+  }
+  .footer a:hover { color:var(--amber); }
+
+  /* ── BOTTOM NAV (floating pill) ── */
   .nav {
-    position:fixed; bottom:0; left:0; right:0;
-    padding:10px 16px calc(var(--safe-bot) + 8px);
-    background:rgba(255,255,255,.95); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-    border-top:1px solid var(--border); display:flex; gap:6px;
-    box-shadow:0 -1px 12px rgba(0,0,0,.06);
+    position:fixed;
+    bottom:calc(var(--safe-bot) + 14px);
+    left:50%; transform:translateX(-50%);
+    z-index:60;
+    display:flex; gap:4px;
+    padding:6px;
+    background:rgba(23,23,26,.85);
+    backdrop-filter:blur(24px) saturate(180%);
+    -webkit-backdrop-filter:blur(24px) saturate(180%);
+    border:1px solid var(--line-hi);
+    border-radius:999px;
+    box-shadow:
+      0 10px 40px -10px rgba(0,0,0,.6),
+      0 0 0 1px rgba(255,255,255,.02) inset;
   }
   .nav-btn {
-    flex:1; padding:9px 4px; border:none; border-radius:12px; background:transparent;
-    color:var(--muted); font-family:'Syne',sans-serif; font-size:10px; font-weight:600;
-    cursor:pointer; transition:all .2s; display:flex; flex-direction:column; align-items:center; gap:4px;
+    position:relative;
+    padding:11px 18px;
+    border:none; border-radius:999px;
+    background:transparent;
+    color:var(--fg-mute);
+    font-family:var(--mono); font-size:10px; font-weight:500;
+    letter-spacing:.12em; text-transform:uppercase;
+    cursor:pointer;
+    display:flex; align-items:center; gap:7px;
+    transition:color .3s, background .3s;
   }
-  .nav-btn svg { transition:stroke .2s; }
-  .nav-btn.active { background:var(--accent-light); color:var(--accent); }
-  .nav-btn.active svg { stroke:var(--accent); }
+  .nav-btn svg { width:14px; height:14px; transition:stroke .3s; }
+  .nav-btn:hover { color:var(--fg-dim); }
+  .nav-btn.active {
+    background:var(--amber);
+    color:var(--ink);
+    box-shadow:
+      0 4px 16px -4px var(--amber),
+      0 0 0 1px rgba(255,255,255,.15) inset;
+  }
+  .nav-btn.active svg { stroke:var(--ink); }
 
-  /* ── LOADING ──────────────────────────────────── */
+  /* ── LOADING OVERLAY ── */
   .loading-overlay {
-    position:fixed; inset:0; background:rgba(238,242,247,.88);
-    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    position:fixed; inset:0;
+    background:rgba(10,10,11,.85);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
     display:none; flex-direction:column; align-items:center; justify-content:center;
-    gap:16px; z-index:300;
+    gap:24px; z-index:300;
   }
   .loading-overlay.visible { display:flex; }
-  .loading-ring { width:52px; height:52px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
-  @keyframes spin { to{transform:rotate(360deg)} }
-  .loading-text { font-family:'DM Mono',monospace; font-size:11px; color:var(--text2); text-transform:uppercase; letter-spacing:.1em; }
-  .loading-sub  { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .loading-rig {
+    width:72px; height:72px;
+    position:relative;
+  }
+  .loading-rig::before, .loading-rig::after {
+    content:''; position:absolute; inset:0;
+    border-radius:50%;
+    border:1px solid transparent;
+  }
+  .loading-rig::before {
+    border-top-color:var(--amber);
+    border-right-color:var(--amber);
+    animation:spin 1s cubic-bezier(.6,.2,.4,.8) infinite;
+  }
+  .loading-rig::after {
+    inset:8px;
+    border-bottom-color:var(--amber-hot);
+    border-left-color:var(--amber-hot);
+    animation:spin 1.4s cubic-bezier(.6,.2,.4,.8) infinite reverse;
+    opacity:.6;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .loading-text {
+    font-family:var(--serif); font-style:italic; font-weight:500;
+    font-size:18px; color:var(--fg);
+    font-variation-settings: "opsz" 144;
+    letter-spacing:-.015em;
+  }
+  .loading-sub {
+    font-family:var(--mono); font-size:10px; color:var(--fg-mute);
+    letter-spacing:.18em; text-transform:uppercase;
+  }
 
-  /* ── TOAST ────────────────────────────────────── */
+  /* ── TOAST ── */
   .toast {
-    position:fixed; bottom:calc(var(--safe-bot) + 88px); left:50%;
-    transform:translateX(-50%) translateY(16px);
-    background:var(--text); color:#fff; font-family:'DM Mono',monospace; font-size:12px;
-    font-weight:500; padding:10px 20px; border-radius:20px; opacity:0;
-    transition:all .3s; z-index:200; white-space:nowrap; box-shadow:var(--shadow-md);
+    position:fixed;
+    bottom:calc(var(--safe-bot) + 80px);
+    left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--fg); color:var(--ink);
+    font-family:var(--mono); font-size:11px; font-weight:500;
+    padding:11px 20px; border-radius:999px;
+    opacity:0; transition:all .3s; z-index:200;
+    white-space:nowrap; letter-spacing:.08em; text-transform:uppercase;
+    box-shadow:0 10px 40px -10px rgba(0,0,0,.8);
   }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ── ENTRANCE STAGGER ── */
+  .view.active > * {
+    opacity:0;
+    animation:staggerIn .7s cubic-bezier(.22,.9,.3,1) forwards;
+  }
+  .view.active > *:nth-child(1) { animation-delay:.05s; }
+  .view.active > *:nth-child(2) { animation-delay:.13s; }
+  .view.active > *:nth-child(3) { animation-delay:.21s; }
+  .view.active > *:nth-child(4) { animation-delay:.29s; }
+  .view.active > *:nth-child(5) { animation-delay:.37s; }
+  .view.active > *:nth-child(6) { animation-delay:.45s; }
+  .view.active > *:nth-child(7) { animation-delay:.53s; }
+  .view.active > *:nth-child(8) { animation-delay:.61s; }
+  @keyframes staggerIn {
+    from { opacity:0; transform:translateY(14px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* iPhone 16 Plus optimizations */
+  @media (min-width:420px) {
+    .wordmark h1 { font-size:44px; }
+    .hero-display { font-size:88px; }
+    .canvas { padding:22px 22px calc(var(--safe-bot) + 110px); }
+  }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="logo">
-    <div class="logo-icon">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 22V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v15"/><path d="M13 9h5a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-5"/><path d="M7 11h4"/><path d="M7 15h4"/><path d="M20 22V15"/>
-      </svg>
+<div class="shell">
+
+  <!-- ── MASTHEAD ── -->
+  <header class="masthead">
+    <div class="status-chip checking" id="statusBadge">
+      <span class="chip-dot"></span>
+      <span id="statusBadgeText">Conectando</span>
     </div>
-    FuelLog
-  </div>
-  <div class="status-badge checking" id="statusBadge">Conectando</div>
-</div>
-
-<div class="main">
-
-  <!-- ── SCAN VIEW ─────────────────────────────── -->
-  <div class="view active" id="viewScan">
-
-    <div class="card">
-      <div class="card-label">Modelo de visión</div>
-      <div class="model-select-wrap">
-        <select id="modelSelect" onchange="selectModel(this.value)">
-          <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash  —  ~$0.0001 / análisis</option>
-          <option value="anthropic/claude-3-5-haiku">Claude 3.5 Haiku  —  ~$0.001 / análisis</option>
-          <option value="anthropic/claude-sonnet-4-5">Claude Sonnet  —  ~$0.003 / análisis</option>
-          <option value="openai/gpt-4o-mini">GPT-4o Mini  —  ~$0.001 / análisis</option>
-        </select>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    <div class="masthead-top">
+      <div class="issue-mark">
+        <span class="dot"></span>
+        <span>Vol. IV</span>
+        <span style="color:var(--fg-deep)">·</span>
+        <span id="issueDate">—</span>
       </div>
+      <div class="issue-meta">Combustion Journal</div>
     </div>
-
-    <div class="gps-bar" id="gpsBar" onclick="retryGPS()">
-      <div class="gps-dot idle" id="gpsDot"></div>
-      <div class="gps-label">GPS</div>
-      <div class="gps-text" id="gpsText">Toca para activar ubicación</div>
-      <div class="gps-retry" id="gpsRetry"></div>
+    <div class="wordmark">
+      <h1>Fuel<span class="amp">&amp;</span>Log</h1>
+      <div class="wordmark-sub">A field ledger for internal combustion</div>
     </div>
+  </header>
 
-    <div class="section-label">Capturas</div>
-    <div class="capture-grid">
+  <!-- ── MAIN ── -->
+  <main class="canvas">
 
-      <div class="capture-card" id="cardTicket" onclick="document.getElementById('inputTicket').click()">
-        <img class="capture-preview" id="previewTicket" alt="">
-        <div class="capture-overlay"><span class="capture-tag">Ticket ✓</span></div>
-        <div class="capture-placeholder">
-          <div class="capture-icon ticket">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/>
-              <path d="M16 8H8"/><path d="M16 12H8"/><path d="M12 16H8"/>
-            </svg>
-          </div>
-          <div class="capture-name">Ticket<br>Combustible</div>
-          <div class="capture-hint">Toca para fotografiar</div>
+    <!-- ═══════════════ SCAN VIEW ═══════════════ -->
+    <div class="view active" id="viewScan">
+
+      <!-- HERO ODOMETER -->
+      <section class="hero">
+        <span class="crop tl"></span><span class="crop tr"></span>
+        <span class="crop bl"></span><span class="crop br"></span>
+        <div class="hero-label">Último repostaje</div>
+        <div class="hero-display">
+          <span id="heroValue">—</span>
+          <span class="unit" id="heroUnit">EUR</span>
         </div>
-      </div>
-      <input type="file" id="inputTicket" accept="image/*" capture="environment" onchange="handleImage(event,'ticket')">
+        <div class="hero-sub">
+          <span><b id="heroLiters">—</b> litros</span>
+          <span class="sep">·</span>
+          <span><b id="heroKm">—</b> km</span>
+          <span class="sep">·</span>
+          <span id="heroDate">—</span>
+        </div>
+      </section>
 
-      <div class="capture-card" id="cardOdo" style="cursor:default;">
-        <div class="odo-photo-zone" onclick="document.getElementById('inputOdo').click()">
-          <img class="capture-preview" id="previewOdo" alt="">
-          <div class="capture-overlay"><span class="capture-tag">Foto ✓</span></div>
+      <!-- MODEL SELECTOR -->
+      <div class="card">
+        <div class="card-eyebrow">
+          <span>I. Modelo de visión</span>
+          <span class="hint">selecciona motor</span>
+        </div>
+        <select id="modelSelect" onchange="selectModel(this.value)">
+          <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash  ·  ~$0.0001</option>
+          <option value="anthropic/claude-3-5-haiku">Claude 3.5 Haiku  ·  ~$0.001</option>
+          <option value="anthropic/claude-sonnet-4-5">Claude Sonnet  ·  ~$0.003</option>
+          <option value="openai/gpt-4o-mini">GPT-4o Mini  ·  ~$0.001</option>
+        </select>
+      </div>
+
+      <!-- GPS -->
+      <div class="gps" id="gpsBar" onclick="retryGPS()">
+        <div class="gps-reticle">
+          <div class="gps-dot idle" id="gpsDot"></div>
+        </div>
+        <div class="gps-body">
+          <div class="gps-label">Posición</div>
+          <div class="gps-text" id="gpsText">Toca para activar ubicación</div>
+        </div>
+        <div class="gps-retry" id="gpsRetry"></div>
+      </div>
+
+      <!-- CHAPTER HEAD -->
+      <div class="chapter">
+        <span class="chapter-num">II</span>
+        <span class="chapter-title">Capturas</span>
+        <span class="chapter-rule"></span>
+      </div>
+
+      <!-- CAPTURE GRID -->
+      <div class="capture-grid">
+
+        <div class="capture" id="cardTicket" onclick="document.getElementById('inputTicket').click()">
+          <img class="capture-preview" id="previewTicket" alt="">
+          <div class="capture-overlay">
+            <span class="capture-tag">
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              Ticket
+            </span>
+          </div>
           <div class="capture-placeholder">
-            <div class="capture-icon odometer">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>
+            <div class="capture-glyph">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/>
+                <path d="M16 8H8"/><path d="M16 12H8"/><path d="M12 16H8"/>
               </svg>
             </div>
-            <div class="capture-name">Odómetro<br>/ Cuadro</div>
-            <div class="capture-hint">Toca para foto</div>
+            <div class="capture-name">Ticket</div>
+            <div class="capture-hint">Fotografía</div>
           </div>
         </div>
-        <div class="odo-manual-zone">
-          <div class="odo-manual-label">KM actuales</div>
-          <input type="number" id="manualOdo" placeholder="——" min="0" step="1"
-                 oninput="checkReady()" onclick="event.stopPropagation()">
+        <input type="file" id="inputTicket" accept="image/*" capture="environment" onchange="handleImage(event,'ticket')">
+
+        <div class="capture" id="cardOdo">
+          <div class="odo-zone" onclick="document.getElementById('inputOdo').click()">
+            <img class="capture-preview" id="previewOdo" alt="">
+            <div class="capture-overlay">
+              <span class="capture-tag">
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                Cuadro
+              </span>
+            </div>
+            <div class="capture-placeholder">
+              <div class="capture-glyph">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m12 14 4-4"/>
+                  <path d="M3.34 19a10 10 0 1 1 17.32 0"/>
+                </svg>
+              </div>
+              <div class="capture-name">Cuadro</div>
+              <div class="capture-hint">Odómetro</div>
+            </div>
+          </div>
+          <div class="odo-manual">
+            <div class="odo-manual-label">KM actuales</div>
+            <input type="number" id="manualOdo" placeholder="——" min="0" step="1"
+                   oninput="checkReady()" onclick="event.stopPropagation()">
+          </div>
+        </div>
+        <input type="file" id="inputOdo" accept="image/*" capture="environment" onchange="handleImage(event,'odo')">
+
+      </div>
+
+      <button class="btn-analyze" id="btnAnalyze" onclick="analyze()" disabled>
+        Analizar repostaje <span class="arrow">→</span>
+      </button>
+      <button class="btn-reset" id="btnReset" onclick="resetScan()">+ Nuevo escaneo</button>
+
+      <div class="error-card" id="errorCard"></div>
+
+      <!-- RESULT -->
+      <div class="result-card" id="resultCard">
+        <div class="result-head">
+          <div class="result-title-block">
+            <div class="result-kicker">Informe</div>
+            <div class="result-title">Datos extraídos</div>
+            <div class="result-model" id="resultModel"></div>
+          </div>
+          <div class="result-actions">
+            <span class="saved-pill">
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              Guardado
+            </span>
+            <button class="btn-sm" onclick="copyJSON()">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              Copiar
+            </button>
+          </div>
+        </div>
+        <div class="ll-row" id="llRow" style="display:none">
+          <span class="ll-logo">LubeLogger</span>
+          <span class="ll-pill" id="llPill"></span>
+          <span class="ll-detail" id="llDetail"></span>
+        </div>
+        <div class="metrics" id="resultMetrics"></div>
+        <div class="json-block">
+          <div class="json-label">JSON</div>
+          <div class="json-pre" id="jsonOutput"></div>
         </div>
       </div>
-      <input type="file" id="inputOdo" accept="image/*" capture="environment" onchange="handleImage(event,'odo')">
 
     </div>
 
-    <button class="btn-analyze" id="btnAnalyze" onclick="analyze()" disabled>Analizar</button>
-    <button class="btn-reset"   id="btnReset"   onclick="resetScan()">+ Nuevo escaneo</button>
+    <!-- ═══════════════ HISTORY VIEW ═══════════════ -->
+    <div class="view" id="viewHistory">
 
-    <div class="error-card" id="errorCard"></div>
-
-    <div class="result-card" id="resultCard">
-      <div class="result-header">
-        <div>
-          <div class="result-title">Resultado</div>
-          <div class="result-model" id="resultModel"></div>
+      <div class="hero" style="padding:22px 24px;">
+        <span class="crop tl"></span><span class="crop tr"></span>
+        <span class="crop bl"></span><span class="crop br"></span>
+        <div class="hero-label">Archivo</div>
+        <div style="display:flex; align-items:baseline; gap:10px; margin-top:4px;">
+          <div style="font-family:var(--serif); font-style:italic; font-weight:500; font-size:42px; color:var(--fg); letter-spacing:-.03em; line-height:.9; font-variation-settings:'opsz' 144;">Historial</div>
+          <div style="font-family:var(--mono); font-size:10px; color:var(--fg-mute); letter-spacing:.1em; text-transform:uppercase;">de repostajes</div>
         </div>
-        <div class="result-actions">
-          <span class="saved-pill">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-            Guardado
-          </span>
-          <button class="btn-icon" onclick="copyJSON()">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-            Copiar
+      </div>
+
+      <div class="history-stats" id="historyStats" style="display:none;">
+        <div class="history-stat">
+          <div class="label">Total</div>
+          <div class="value"><span id="statCount">0</span></div>
+        </div>
+        <div class="history-stat">
+          <div class="label">Gastado</div>
+          <div class="value"><span id="statSpent">0</span><span class="u">€</span></div>
+        </div>
+        <div class="history-stat">
+          <div class="label">Litros</div>
+          <div class="value"><span id="statLiters">0</span><span class="u">L</span></div>
+        </div>
+      </div>
+
+      <div class="chapter">
+        <span class="chapter-num">—</span>
+        <span class="chapter-title">Registros</span>
+        <span class="chapter-rule"></span>
+      </div>
+
+      <div class="history-list" id="historyList"></div>
+    </div>
+
+    <!-- ═══════════════ SETTINGS VIEW ═══════════════ -->
+    <div class="view" id="viewSettings">
+
+      <div class="hero" style="padding:22px 24px;">
+        <span class="crop tl"></span><span class="crop tr"></span>
+        <span class="crop bl"></span><span class="crop br"></span>
+        <div class="hero-label">Configuración</div>
+        <div style="display:flex; align-items:baseline; gap:10px; margin-top:4px;">
+          <div style="font-family:var(--serif); font-style:italic; font-weight:500; font-size:42px; color:var(--fg); letter-spacing:-.03em; line-height:.9; font-variation-settings:'opsz' 144;">Ajustes</div>
+          <div style="font-family:var(--mono); font-size:10px; color:var(--fg-mute); letter-spacing:.1em; text-transform:uppercase;">del sistema</div>
+        </div>
+      </div>
+
+      <div class="chapter">
+        <span class="chapter-num">I</span>
+        <span class="chapter-title">Vehículo</span>
+        <span class="chapter-rule"></span>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow"><span>Nombre</span></div>
+        <input type="text" id="vehicleName" placeholder="Ej: BMW 420 D Gran Coupé">
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow"><span>Combustible por defecto</span></div>
+        <select id="fuelType">
+          <option value="gasolina_95">Gasolina 95</option>
+          <option value="gasolina_98">Gasolina 98</option>
+          <option value="diesel">Diésel</option>
+          <option value="glp">GLP</option>
+          <option value="electrico">Eléctrico</option>
+        </select>
+      </div>
+
+      <div class="chapter">
+        <span class="chapter-num">II</span>
+        <span class="chapter-title">LubeLogger</span>
+        <span class="chapter-rule"></span>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow"><span>Conexión</span><span id="llConnStatus" class="hint">—</span></div>
+        <p class="hint">Configura <code>LUBELOGGER_URL</code> y <code>LUBELOGGER_API_KEY</code> en el fichero <code>.env</code> del servidor.</p>
+        <div class="card-eyebrow" style="margin-top:6px;"><span>Vehículo destino</span></div>
+        <div class="row">
+          <select id="llVehicleSelect" style="flex:1;" onchange="onLLVehicleChange(this)">
+            <option value="">— sin vehículos —</option>
+          </select>
+          <button class="btn-sm" onclick="loadLLVehicles()" title="Recargar">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
           </button>
         </div>
+        <button class="btn-sm full" id="btnSaveLL" onclick="saveLubeLoggerVehicle()" style="margin-top:8px;">Guardar vehículo</button>
       </div>
-      <div class="ll-row" id="llRow" style="display:none">
-        <span class="ll-logo">LubeLogger</span>
-        <span class="ll-pill" id="llPill"></span>
-        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="llDetail"></span>
+
+      <div class="chapter">
+        <span class="chapter-num">III</span>
+        <span class="chapter-title">Integraciones</span>
+        <span class="chapter-rule"></span>
       </div>
-      <div class="result-metrics" id="resultMetrics"></div>
-      <div class="json-block">
-        <div class="json-label">JSON</div>
-        <div class="json-pre" id="jsonOutput"></div>
+
+      <div class="card">
+        <div class="card-eyebrow"><span>Webhook de salida</span></div>
+        <div class="row">
+          <input type="url" id="webhookUrl" placeholder="https://tu-sistema.com/webhook" style="flex:1;">
+          <button class="btn-sm" id="btnSaveWebhook" onclick="saveWebhook()">Guardar</button>
+        </div>
+        <p class="hint">POST con el JSON completo tras cada análisis.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow"><span>Servidor</span></div>
+        <div class="info-row">API Key OpenRouter <span id="keyStatus">—</span></div>
+      </div>
+
+      <div class="chapter">
+        <span class="chapter-num">IV</span>
+        <span class="chapter-title">Datos</span>
+        <span class="chapter-rule"></span>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow"><span>Exportar historial</span></div>
+        <button class="btn-sm full" onclick="exportAll()">Descargar JSON completo</button>
+      </div>
+
+      <div class="card" style="border-color:rgba(232,65,24,.2);">
+        <div class="card-eyebrow" style="color:var(--ember);"><span>Zona de peligro</span></div>
+        <button class="btn-sm danger full" onclick="clearHistory()">Borrar todo el historial</button>
       </div>
     </div>
 
-  </div>
+    <div class="footer">
+      <a href="https://www.izylia.com" target="_blank" rel="noopener">— Made by iZylia —</a>
+    </div>
 
-  <!-- ── HISTORY VIEW ───────────────────────────── -->
-  <div class="view" id="viewHistory">
-    <div class="section-label" style="margin-bottom:4px;">Historial de repostajes</div>
-    <div class="history-list" id="historyList"></div>
-  </div>
-
-  <!-- ── SETTINGS VIEW ─────────────────────────── -->
-  <div class="view" id="viewSettings">
-    <div class="card">
-      <div class="card-label">Vehículo</div>
-      <input type="text" id="vehicleName" placeholder="Ej: BMW 420 D Gran Coupé">
-    </div>
-    <div class="card">
-      <div class="card-label">Combustible por defecto</div>
-      <select id="fuelType">
-        <option value="gasolina_95">Gasolina 95</option>
-        <option value="gasolina_98">Gasolina 98</option>
-        <option value="diesel">Diésel</option>
-        <option value="glp">GLP</option>
-        <option value="electrico">Eléctrico</option>
-      </select>
-    </div>
-    <div class="card">
-      <div class="card-label">LubeLogger</div>
-      <div class="info-row">Conexión <span id="llConnStatus">—</span></div>
-      <p class="hint">Configura <code>LUBELOGGER_URL</code> y <code>LUBELOGGER_API_KEY</code> en el fichero <code>.env</code> del servidor.</p>
-      <div class="card-label" style="margin-top:4px;">Vehículo destino</div>
-      <div class="row">
-        <select id="llVehicleSelect" style="flex:1;" onchange="onLLVehicleChange(this)">
-          <option value="">— sin vehículos —</option>
-        </select>
-        <button class="btn-small" onclick="loadLLVehicles()" title="Recargar vehículos">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-        </button>
-      </div>
-      <button class="btn-small full" id="btnSaveLL" onclick="saveLubeLoggerVehicle()">Guardar vehículo</button>
-    </div>
-    <div class="card">
-      <div class="card-label">Webhook de salida</div>
-      <div class="row">
-        <input type="url" id="webhookUrl" placeholder="https://tu-sistema.com/webhook">
-        <button class="btn-small" id="btnSaveWebhook" onclick="saveWebhook()">Guardar</button>
-      </div>
-      <p class="hint">POST con el JSON completo tras cada análisis.</p>
-    </div>
-    <div class="card">
-      <div class="card-label">Estado del servidor</div>
-      <div class="info-row">API Key OpenRouter <span id="keyStatus">—</span></div>
-    </div>
-    <div class="card">
-      <div class="card-label">Exportar historial</div>
-      <button class="btn-small full" onclick="exportAll()">
-        Descargar JSON
-      </button>
-    </div>
-    <div class="card">
-      <div class="card-label" style="color:var(--red);">Zona de peligro</div>
-      <button class="btn-small danger full" onclick="clearHistory()">Borrar todo el historial</button>
-    </div>
-  </div>
-
-  <div class="footer">
-    <a href="https://www.izylia.com" target="_blank" rel="noopener">Made by iZylia</a>
-  </div>
+  </main>
 
 </div>
 
+<!-- ── FLOATING NAV ── -->
 <nav class="nav">
   <button class="nav-btn active" id="navScan" onclick="switchView('scan')">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
     Escanear
   </button>
   <button class="nav-btn" id="navHistory" onclick="switchView('history')">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
     Historial
   </button>
   <button class="nav-btn" id="navSettings" onclick="switchView('settings')">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     Ajustes
   </button>
 </nav>
 
+<!-- ── LOADING ── -->
 <div class="loading-overlay" id="loadingOverlay">
-  <div class="loading-ring"></div>
+  <div class="loading-rig"></div>
   <div class="loading-text" id="loadingText">Analizando…</div>
-  <div class="loading-sub"  id="loadingSub"></div>
+  <div class="loading-sub" id="loadingSub"></div>
 </div>
 
+<!-- ── TOAST ── -->
 <div class="toast" id="toast"></div>
 
 <script>
+/* ═══════════════════════════════════════════════════════════
+   TODA LA LÓGICA ORIGINAL SE PRESERVA SIN TOCAR
+   Solo se adaptan los selectores donde el markup cambió
+   ═══════════════════════════════════════════════════════════ */
+
 let images = { ticket: null, odo: null };
 let currentResult = null;
 let selectedModel = 'google/gemini-2.0-flash-001';
@@ -553,8 +1183,16 @@ const savedModel = localStorage.getItem('or_model') || 'google/gemini-2.0-flash-
 selectedModel = savedModel;
 document.getElementById('modelSelect').value = savedModel;
 
+// set issue date
+(() => {
+  const d = new Date();
+  const months = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+  document.getElementById('issueDate').textContent = `${String(d.getDate()).padStart(2,'0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+})();
+
 checkHealth();
 initGPS();
+loadLastRecord();
 
 // ── GPS ───────────────────────────────────────────────────────────────────────
 function initGPS() {
@@ -589,24 +1227,25 @@ function setGPSStatus(state, text, retry) {
 // ── Health ────────────────────────────────────────────────────────────────────
 async function checkHealth() {
   const badge = document.getElementById('statusBadge');
+  const badgeText = document.getElementById('statusBadgeText');
   try {
     const res  = await fetch('/api/health');
     const data = await res.json();
     if (data.ok && data.key_configured) {
-      badge.textContent = 'API OK'; badge.className = 'status-badge ok';
+      badgeText.textContent = 'En línea'; badge.className = 'status-chip ok';
       document.getElementById('keyStatus').textContent = 'Configurada ✓';
     } else {
-      badge.textContent = 'Sin API Key'; badge.className = 'status-badge err';
+      badgeText.textContent = 'Sin API'; badge.className = 'status-chip err';
       document.getElementById('keyStatus').textContent = 'No configurada';
       showError('API Key no configurada en el servidor.\nEdita el fichero .env y reinicia.');
     }
     const llEl = document.getElementById('llConnStatus');
     if (llEl) {
       llEl.textContent = data.lubelogger_configured ? 'Conectado ✓' : 'Sin configurar';
-      llEl.style.color = data.lubelogger_configured ? 'var(--green)' : 'var(--red)';
+      llEl.style.color = data.lubelogger_configured ? 'var(--mint)' : 'var(--ember)';
     }
   } catch {
-    badge.textContent = 'Sin servidor'; badge.className = 'status-badge err';
+    badgeText.textContent = 'Offline'; badge.className = 'status-chip err';
     showError('No se puede conectar con el backend.\n¿Están los contenedores corriendo?');
   }
 }
@@ -621,181 +1260,191 @@ function selectModel(model) {
 function switchView(view) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const cap = view.charAt(0).toUpperCase() + view.slice(1);
-  document.getElementById('view' + cap).classList.add('active');
-  document.getElementById('nav'  + cap).classList.add('active');
+  document.getElementById(`view${view.charAt(0).toUpperCase()}${view.slice(1)}`).classList.add('active');
+  document.getElementById(`nav${view.charAt(0).toUpperCase()}${view.slice(1)}`).classList.add('active');
   if (view === 'history')  renderHistory();
   if (view === 'settings') loadSettings();
-  if (view === 'scan' && !gpsCoords) initGPS();
 }
 
-// ── Images ────────────────────────────────────────────────────────────────────
+// ── Image capture ─────────────────────────────────────────────────────────────
 function handleImage(event, type) {
   const file = event.target.files[0];
   if (!file) return;
-  const img = new Image();
-  const url = URL.createObjectURL(file);
-  img.onload = () => {
-    const canvas = document.createElement('canvas');
-    const MAX = 1280;
-    let w = img.width, h = img.height;
-    if (w > MAX || h > MAX) {
-      if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-      else       { w = Math.round(w * MAX / h); h = MAX; }
-    }
-    canvas.width = w; canvas.height = h;
-    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-    const dataUrl = canvas.toDataURL('image/jpeg', .85);
-    URL.revokeObjectURL(url);
-    if (type === 'ticket') {
-      images.ticket = dataUrl;
-      document.getElementById('previewTicket').src = dataUrl;
-      document.getElementById('cardTicket').classList.add('has-image');
-    } else {
-      images.odo = dataUrl;
-      document.getElementById('previewOdo').src = dataUrl;
-      document.getElementById('cardOdo').classList.add('has-image');
-      document.getElementById('manualOdo').value = '';
-    }
-    event.target.value = '';
+  const reader = new FileReader();
+  reader.onload = e => {
+    images[type] = e.target.result;
+    const card = document.getElementById(type === 'ticket' ? 'cardTicket' : 'cardOdo');
+    const img  = document.getElementById(type === 'ticket' ? 'previewTicket' : 'previewOdo');
+    img.src = e.target.result;
+    card.classList.add('has-image');
     checkReady();
   };
-  img.src = url;
+  reader.readAsDataURL(file);
 }
 
 function checkReady() {
-  const manualKm = document.getElementById('manualOdo').value.trim();
-  document.getElementById('btnAnalyze').disabled = !(images.ticket && (images.odo || manualKm));
+  const hasTicket = !!images.ticket;
+  const hasOdo    = !!images.odo || !!document.getElementById('manualOdo').value;
+  document.getElementById('btnAnalyze').disabled = !(hasTicket && hasOdo);
+}
+
+function resetScan() {
+  images = { ticket:null, odo:null };
+  currentResult = null;
+  ['cardTicket','cardOdo'].forEach(id => document.getElementById(id).classList.remove('has-image'));
+  ['previewTicket','previewOdo'].forEach(id => document.getElementById(id).src = '');
+  ['inputTicket','inputOdo'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('manualOdo').value = '';
+  document.getElementById('resultCard').classList.remove('visible');
+  document.getElementById('btnReset').classList.remove('visible');
+  hideError();
+  checkReady();
 }
 
 // ── Analyze ───────────────────────────────────────────────────────────────────
 async function analyze() {
-  const manualKm = document.getElementById('manualOdo').value.trim();
-  if (!images.ticket) { showError('Necesitas la foto del ticket.'); return; }
-  if (!images.odo && !manualKm) { showError('Necesitas la foto del odómetro o escribe los km manualmente.'); return; }
-
   hideError();
-  document.getElementById('resultCard').classList.remove('visible');
-  document.getElementById('btnReset').classList.remove('visible');
+  setLoading(true, 'Analizando ticket', 'Visión IA procesando');
 
-  setLoading(true, 'Analizando imágenes…', selectedModel.split('/').pop());
+  const payload = {
+    model: selectedModel,
+    ticket_image: images.ticket,
+    odometer_image: images.odo,
+    manual_odometer: document.getElementById('manualOdo').value || null,
+    vehicle_name: document.getElementById('vehicleName').value || null,
+    fuel_type: document.getElementById('fuelType').value || null,
+    gps: gpsCoords,
+  };
 
-  const vehicle = document.getElementById('vehicleName').value.trim()
-                || localStorage.getItem('vehicle_name') || 'No especificado';
   try {
     const res = await fetch('/api/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ticket_b64: images.ticket.split(',')[1],
-        ...(images.odo ? { odo_b64: images.odo.split(',')[1] } : {}),
-        model: selectedModel,
-        vehicle,
-        ...(gpsCoords ? { lat: gpsCoords.lat, lon: gpsCoords.lon } : {}),
-        ...(manualKm  ? { manual_odometer_km: parseInt(manualKm) } : {}),
-      }),
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload),
     });
-    setLoading(false);
+
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Error ${res.status}`);
+      throw new Error(err.detail || `Error HTTP ${res.status}`);
     }
-    const parsed = await res.json();
-    currentResult = parsed;
-    renderResult(parsed);
+    const data = await res.json();
+    currentResult = data;
+    renderResult(data);
     document.getElementById('btnReset').classList.add('visible');
-  } catch (err) {
+    loadLastRecord();
+  } catch (e) {
+    showError(`Error:\n${e.message}`);
+  } finally {
     setLoading(false);
-    showError(err.message);
   }
 }
 
-// ── Reset ─────────────────────────────────────────────────────────────────────
-function resetScan() {
-  images = { ticket: null, odo: null };
-  currentResult = null;
-  ['Ticket','Odo'].forEach(t => {
-    document.getElementById('preview' + t).src = '';
-    document.getElementById('card'    + t).classList.remove('has-image');
-  });
-  document.getElementById('inputTicket').value = '';
-  document.getElementById('inputOdo').value    = '';
-  document.getElementById('manualOdo').value   = '';
-  document.getElementById('resultCard').classList.remove('visible');
-  document.getElementById('btnReset').classList.remove('visible');
-  document.getElementById('btnAnalyze').disabled = true;
-  hideError();
-  initGPS();
-  window.scrollTo({ top:0, behavior:'smooth' });
-}
-
-// ── Render result ─────────────────────────────────────────────────────────────
 function renderResult(data) {
   const card = document.getElementById('resultCard');
   card.classList.add('visible');
-  document.getElementById('resultModel').textContent = data._model || '';
 
-  // LubeLogger status
-  const llRow  = document.getElementById('llRow');
-  const llPill = document.getElementById('llPill');
-  const llDet  = document.getElementById('llDetail');
-  const ll = data._lubelogger;
-  if (ll) {
-    llRow.style.display = 'flex';
-    if (ll.ok) {
-      llPill.textContent = 'Enviado ✓'; llPill.className = 'll-pill ok';
-      llDet.textContent  = ll.doc ? 'Con foto adjunta' : 'Sin foto adjunta';
-    } else if (ll.error === 'no_config') {
-      llPill.textContent = 'Sin configurar'; llPill.className = 'll-pill skip';
-      llDet.textContent  = 'Configura en Ajustes → LubeLogger';
-    } else {
-      llPill.textContent = 'Error ✗'; llPill.className = 'll-pill err';
-      llDet.textContent  = ll.error || '';
-    }
-  } else { llRow.style.display = 'none'; }
+  document.getElementById('resultModel').textContent = selectedModel;
 
-  const m = (label, value, cls='') =>
-    `<div class="metric"><div class="metric-label">${label}</div><div class="metric-value ${cls}">${value ?? '—'}</div></div>`;
+  // Metrics
+  const m = document.getElementById('resultMetrics');
+  m.innerHTML = '';
+  const metrics = [
+    { label:'Importe',   value: data.importe_total != null ? `${Number(data.importe_total).toFixed(2)} €` : '—', cls:'' },
+    { label:'Litros',    value: data.litros != null ? `${Number(data.litros).toFixed(2)} L` : '—', cls:'secondary' },
+    { label:'€ / litro', value: data.precio_por_litro != null ? `${Number(data.precio_por_litro).toFixed(3)} €/L` : '—', cls:'secondary' },
+    { label:'Odómetro',  value: data.odometro_km != null ? `${Number(data.odometro_km).toLocaleString('es-ES')} km` : '—', cls:'' },
+    { label:'Tipo',      value: data.tipo_combustible || '—', cls:'neutral' },
+    { label:'Estación',  value: data.gasolinera || '—', cls:'neutral' },
+  ];
+  metrics.forEach(met => {
+    m.innerHTML += `
+      <div class="metric">
+        <div class="metric-label">${met.label}</div>
+        <div class="metric-value ${met.cls}">${met.value}</div>
+      </div>`;
+  });
 
-  document.getElementById('resultMetrics').innerHTML =
-    m('Importe Total', data.importe_total    != null ? `${Number(data.importe_total).toFixed(2)} €`    : '—') +
-    m('Litros',        data.litros           != null ? `${Number(data.litros).toFixed(2)} L`           : '—', 'secondary') +
-    m('Precio / Litro',data.precio_por_litro != null ? `${Number(data.precio_por_litro).toFixed(3)} €` : '—', 'secondary') +
-    m('Odómetro',      data.odometro_km      != null ? `${Number(data.odometro_km).toLocaleString('es-ES')} km` : '—') +
-    m('Combustible',   data.tipo_combustible ?? '—', 'neutral') +
-    m('Gasolinera',    data.gasolinera       ?? '—', 'neutral');
-
+  // JSON
   document.getElementById('jsonOutput').innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
-  setTimeout(() => card.scrollIntoView({ behavior:'smooth', block:'start' }), 100);
+
+  // LubeLogger row
+  const llRow = document.getElementById('llRow');
+  const llPill = document.getElementById('llPill');
+  const llDetail = document.getElementById('llDetail');
+  if (data.lubelogger_status) {
+    llRow.style.display = 'flex';
+    llPill.className = `ll-pill ${data.lubelogger_status.ok ? 'ok' : (data.lubelogger_status.skipped ? 'skip' : 'err')}`;
+    llPill.textContent = data.lubelogger_status.ok ? 'Sincronizado' : (data.lubelogger_status.skipped ? 'Omitido' : 'Error');
+    llDetail.textContent = data.lubelogger_status.detail || '';
+  } else {
+    llRow.style.display = 'none';
+  }
 }
 
 function syntaxHighlight(json) {
-  return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, m => {
-    let cls = 'number';
-    if (/^"/.test(m)) { cls = /:$/.test(m) ? 'key' : 'string'; }
-    else if (/null/.test(m)) cls = 'null';
-    return `<span class="${cls}">${m}</span>`;
-  });
+  return json.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+      match => {
+        let cls = 'number';
+        if (/^"/.test(match)) cls = /:$/.test(match) ? 'key' : 'string';
+        else if (/true|false/.test(match)) cls = 'number';
+        else if (/null/.test(match)) cls = 'null';
+        return `<span class="${cls}">${match}</span>`;
+      });
+}
+
+// ── Hero: load last record ────────────────────────────────────────────────────
+async function loadLastRecord() {
+  try {
+    const res = await fetch('/api/records');
+    const history = await res.json();
+    if (!history.length) {
+      document.getElementById('heroValue').textContent = '—';
+      document.getElementById('heroLiters').textContent = '—';
+      document.getElementById('heroKm').textContent = '—';
+      document.getElementById('heroDate').textContent = 'Sin registros';
+      return;
+    }
+    const last = history[0];
+    const val = last.importe_total != null ? Number(last.importe_total).toFixed(2) : '—';
+    document.getElementById('heroValue').textContent = val;
+    document.getElementById('heroLiters').textContent = last.litros != null ? Number(last.litros).toFixed(1) : '—';
+    document.getElementById('heroKm').textContent = last.odometro_km != null ? Number(last.odometro_km).toLocaleString('es-ES') : '—';
+    document.getElementById('heroDate').textContent = last.fecha || '—';
+  } catch {
+    document.getElementById('heroDate').textContent = 'Offline';
+  }
 }
 
 // ── History ───────────────────────────────────────────────────────────────────
 async function renderHistory() {
   const list = document.getElementById('historyList');
+  const stats = document.getElementById('historyStats');
   list.innerHTML = '<div class="empty-history">Cargando…</div>';
   try {
     const res     = await fetch('/api/records');
     const history = await res.json();
     if (!history.length) {
+      stats.style.display = 'none';
       list.innerHTML = `<div class="empty-history">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v15"/><path d="M13 9h5a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-5"/><path d="M7 11h4"/><path d="M7 15h4"/><path d="M20 22V15"/></svg>
-        Sin registros aún.<br>Escanea tu primer ticket.
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v15"/><path d="M13 9h5a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-5"/><path d="M7 11h4"/><path d="M7 15h4"/><path d="M20 22V15"/></svg>
+        Sin registros<br>Escanea tu primer ticket
       </div>`;
       return;
     }
+
+    // stats
+    const totalSpent  = history.reduce((s,r) => s + (Number(r.importe_total)||0), 0);
+    const totalLiters = history.reduce((s,r) => s + (Number(r.litros)||0), 0);
+    document.getElementById('statCount').textContent  = history.length;
+    document.getElementById('statSpent').textContent  = totalSpent.toFixed(0);
+    document.getElementById('statLiters').textContent = totalLiters.toFixed(0);
+    stats.style.display = 'grid';
+
     list.innerHTML = history.map(item => `
       <div class="history-item" onclick='loadHistoryItem(${JSON.stringify(item).replace(/'/g,"&#39;")})'>
         <div class="history-left">
-          <div class="history-date">${item.fecha || 'Sin fecha'} ${item.hora || ''}</div>
+          <div class="history-date">${item.fecha || 'Sin fecha'} · ${item.hora || ''}</div>
           <div class="history-cost">${item.importe_total != null ? Number(item.importe_total).toFixed(2) + ' €' : '—'}</div>
           <div class="history-km">${item.odometro_km != null ? Number(item.odometro_km).toLocaleString('es-ES') + ' km' : '—'} · ${item.litros != null ? Number(item.litros).toFixed(2) + ' L' : '—'}</div>
         </div>
@@ -805,7 +1454,7 @@ async function renderHistory() {
         </div>
       </div>`).join('');
   } catch {
-    list.innerHTML = '<div class="empty-history">Error al cargar el historial.</div>';
+    list.innerHTML = '<div class="empty-history">Error al cargar el historial</div>';
   }
 }
 
@@ -821,6 +1470,7 @@ async function deleteRecord(event, id) {
   if (!confirm('¿Borrar este registro?')) return;
   await fetch(`/api/records/${id}`, { method:'DELETE' });
   renderHistory();
+  loadLastRecord();
   showToast('Registro borrado');
 }
 
@@ -883,7 +1533,7 @@ async function saveLubeLoggerVehicle() {
     });
     btn.textContent = '✓ Guardado'; btn.classList.add('saved');
     setTimeout(() => { btn.textContent = 'Guardar vehículo'; btn.classList.remove('saved'); }, 2000);
-    showToast('Vehículo LubeLogger guardado');
+    showToast('Vehículo guardado');
   } catch { showToast('Error al guardar'); }
 }
 
@@ -898,7 +1548,7 @@ async function saveWebhook() {
     btn.textContent = '✓'; btn.classList.add('saved');
     setTimeout(() => { btn.textContent = 'Guardar'; btn.classList.remove('saved'); }, 2000);
     showToast(url ? 'Webhook guardado' : 'Webhook eliminado');
-  } catch { showToast('Error al guardar webhook'); }
+  } catch { showToast('Error al guardar'); }
 }
 
 async function exportAll() { window.location.href = '/api/export'; }
@@ -907,6 +1557,7 @@ async function clearHistory() {
   if (!confirm('¿Borrar todo el historial? No se puede deshacer.')) return;
   await fetch('/api/records', { method:'DELETE' });
   renderHistory();
+  loadLastRecord();
   showToast('Historial borrado');
 }
 

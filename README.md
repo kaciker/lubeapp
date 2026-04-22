@@ -114,8 +114,7 @@ Opcionalmente, la app puede enviar un `POST` con el JSON completo del análisis 
 ├── .env.example
 ├── docker-compose.yml
 ├── fuel-tracker.html
-├── index.html
-└── nginx.conf
+└── index.html
 ```
 
 ## Variables de entorno
@@ -206,26 +205,5 @@ El repositorio debe incluir `.env.example`, pero no claves reales ni datos priva
 - El backend limita el tamaño de cada imagen enviada en base64.
 - Si no hay foto del odómetro, acepta kilometraje manual.
 - La geocodificación inversa se hace contra Nominatim de OpenStreetMap.
-- El proyecto contiene también `fuel-tracker.html`, que parece un archivo anterior o alternativo y no forma parte del flujo servido actualmente por la API.
 
-## Siguiente paso para GitHub
 
-Repositorio destino:
-
-```text
-https://github.com/kaciker/lubeapp
-```
-
-Flujo recomendado:
-
-```bash
-cd /opt/lubeapp
-git init
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/kaciker/lubeapp.git
-git push -u origin main
-```
-
-Antes de hacer `git add .`, asegúrate de tener el `.gitignore` correcto para no subir secretos ni la base de datos.
