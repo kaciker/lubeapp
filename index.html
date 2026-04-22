@@ -1308,12 +1308,13 @@ async function analyze() {
 
   const payload = {
     model: selectedModel,
-    ticket_image: images.ticket,
-    odometer_image: images.odo,
-    manual_odometer: document.getElementById('manualOdo').value || null,
-    vehicle_name: document.getElementById('vehicleName').value || null,
-    fuel_type: document.getElementById('fuelType').value || null,
-    gps: gpsCoords,
+    ticket_b64: images.ticket,
+    odo_b64: images.odo,
+    manual_odometer_km: document.getElementById('manualOdo').value || null,
+    vehicle: document.getElementById('vehicleName').value || 'No especificado',
+    lat: gpsCoords?.lat ?? null,
+    lon: gpsCoords?.lon ?? null,
+    lubelogger_vehicle_id: document.getElementById('llVehicleSelect')?.value || null,
   };
 
   try {
@@ -1325,7 +1326,7 @@ async function analyze() {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Error HTTP ${res.status}`);
+      throw new Error(getErrorMessage(err.detail, res.status));
     }
     const data = await res.json();
     currentResult = data;
@@ -1371,14 +1372,37 @@ function renderResult(data) {
   const llRow = document.getElementById('llRow');
   const llPill = document.getElementById('llPill');
   const llDetail = document.getElementById('llDetail');
-  if (data.lubelogger_status) {
+  const llStatus = data._lubelogger || data.lubelogger_status;
+  if (llStatus) {
     llRow.style.display = 'flex';
-    llPill.className = `ll-pill ${data.lubelogger_status.ok ? 'ok' : (data.lubelogger_status.skipped ? 'skip' : 'err')}`;
-    llPill.textContent = data.lubelogger_status.ok ? 'Sincronizado' : (data.lubelogger_status.skipped ? 'Omitido' : 'Error');
-    llDetail.textContent = data.lubelogger_status.detail || '';
+    llPill.className = `ll-pill ${llStatus.ok ? 'ok' : (llStatus.skipped ? 'skip' : 'err')}`;
+    llPill.textContent = llStatus.ok ? 'Sincronizado' : (llStatus.skipped ? 'Omitido' : 'Error');
+    llDetail.textContent = llStatus.detail || llStatus.error || '';
   } else {
     llRow.style.display = 'none';
   }
+}
+
+function getErrorMessage(detail, status) {
+  if (typeof detail === 'string' && detail.trim()) return detail;
+
+  if (Array.isArray(detail) && detail.length) {
+    return detail.map(item => {
+      if (typeof item === 'string') return item;
+      if (item?.msg) {
+        const path = Array.isArray(item.loc) ? item.loc.slice(1).join('.') : '';
+        return path ? `${path}: ${item.msg}` : item.msg;
+      }
+      return JSON.stringify(item);
+    }).join('\n');
+  }
+
+  if (detail && typeof detail === 'object') {
+    if (typeof detail.message === 'string') return detail.message;
+    return JSON.stringify(detail);
+  }
+
+  return `Error HTTP ${status}`;
 }
 
 function syntaxHighlight(json) {

@@ -159,14 +159,14 @@ async def fire_webhook(data: dict) -> None:
 # LubeLogger integration
 # ---------------------------------------------------------------------------
 
-async def push_to_lubelogger(parsed: dict, ticket_b64: str) -> dict:
+async def push_to_lubelogger(parsed: dict, ticket_b64: str, selected_vehicle_id: Optional[str] = None) -> dict:
     ll_url = LL_URL
     ll_key = LL_KEY
 
     conn = get_db()
     vid_row = conn.execute("SELECT value FROM config WHERE key='lubelogger_vehicle_id'").fetchone()
     conn.close()
-    ll_vid = vid_row["value"] if vid_row and vid_row["value"] else ""
+    ll_vid = selected_vehicle_id or (vid_row["value"] if vid_row and vid_row["value"] else "")
 
     if not ll_url or not ll_key or not ll_vid:
         return {"ok": False, "error": "no_config"}
@@ -244,10 +244,18 @@ async def push_to_lubelogger(parsed: dict, ticket_b64: str) -> dict:
                 json=payload,
             )
         if r.is_success:
-            return {"ok": True, "doc": doc_location}
-        return {"ok": False, "error": f"{r.status_code}: {r.text[:200]}"}
+            return {"ok": True, "detail": "Registro enviado a LubeLogger", "doc": doc_location}
+
+        detail = r.text[:200]
+        lowered = detail.lower()
+        if "vehicle" in lowered and "not found" in lowered:
+            detail = "El vehículo configurado en LubeLogger ya no existe. Selecciona otro y guarda."
+        elif "vehicleid" in lowered:
+            detail = "El vehículo configurado en LubeLogger no es válido. Selecciona otro y guarda."
+
+        return {"ok": False, "detail": detail, "error": f"{r.status_code}: {detail}"}
     except Exception as e:
-        return {"ok": False, "error": str(e)[:200]}
+        return {"ok": False, "detail": str(e)[:200], "error": str(e)[:200]}
 
 
 # ---------------------------------------------------------------------------
@@ -262,6 +270,7 @@ class AnalyzeRequest(BaseModel):
     lat: Optional[float] = None
     lon: Optional[float] = None
     manual_odometer_km: Optional[int] = None
+    lubelogger_vehicle_id: Optional[str] = None
 
 
 class ConfigBody(BaseModel):
@@ -413,7 +422,7 @@ async def analyze(req: AnalyzeRequest):
         parsed["odometro_km"] = req.manual_odometer_km
 
     # Push to LubeLogger (synchronous so status is included in response)
-    ll_result = await push_to_lubelogger(parsed, req.ticket_b64)
+    ll_result = await push_to_lubelogger(parsed, req.ticket_b64, req.lubelogger_vehicle_id)
     parsed["_lubelogger"] = ll_result
 
     # Persist
