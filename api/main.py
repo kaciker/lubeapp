@@ -40,6 +40,13 @@ ALLOWED_MODELS = {
     "openai/gpt-4o-mini",
 }
 
+
+def normalize_base64_image(value: str) -> str:
+    value = value.strip()
+    if "," in value and value.startswith("data:"):
+        return value.split(",", 1)[1]
+    return value
+
 PROMPT_TEMPLATE = """Analiza estas dos imágenes:
 1. Un ticket/recibo de repostaje de combustible
 2. El odómetro o cuadro de mandos de un vehículo
@@ -178,7 +185,7 @@ async def push_to_lubelogger(parsed: dict, ticket_b64: str, selected_vehicle_id:
     doc_location: str | None = None
     doc_name = f"ticket_{record_id}.jpg"
     try:
-        img_bytes = base64.b64decode(ticket_b64)
+        img_bytes = base64.b64decode(normalize_base64_image(ticket_b64))
         async with httpx.AsyncClient(timeout=30) as client:
             r = await client.post(
                 f"{ll_url}/api/documents/upload",
@@ -323,12 +330,15 @@ async def analyze(req: AnalyzeRequest):
     if req.model not in ALLOWED_MODELS:
         raise HTTPException(400, f"Modelo no permitido: {req.model}")
 
+    ticket_b64 = normalize_base64_image(req.ticket_b64)
+    odo_b64 = normalize_base64_image(req.odo_b64) if req.odo_b64 else None
+
     # Size guard
-    if len(req.ticket_b64) > 4_000_000:
+    if len(ticket_b64) > 4_000_000:
         raise HTTPException(413, "Imagen del ticket demasiado grande (máx ~3 MB en base64)")
-    if req.odo_b64 and len(req.odo_b64) > 4_000_000:
+    if odo_b64 and len(odo_b64) > 4_000_000:
         raise HTTPException(413, "Imagen del odómetro demasiado grande (máx ~3 MB en base64)")
-    if not req.odo_b64 and req.manual_odometer_km is None:
+    if not odo_b64 and req.manual_odometer_km is None:
         raise HTTPException(400, "Se necesita foto del odómetro o km manual.")
 
     # Reverse geocode before building prompt so the AI gets location context
@@ -341,7 +351,7 @@ async def analyze(req: AnalyzeRequest):
         gps_context = f"\nContexto GPS: el vehículo está en «{gps_address}». Usa esta información para completar gasolinera y dirección si no se leen claramente en el ticket.\n"
 
     # Build prompt — single image if no odo photo
-    if req.odo_b64:
+    if odo_b64:
         intro = "Analiza estas dos imágenes:\n1. Un ticket/recibo de repostaje de combustible\n2. El odómetro o cuadro de mandos de un vehículo"
         odo_note = ""
     else:
@@ -356,9 +366,9 @@ async def analyze(req: AnalyzeRequest):
         prompt = prompt.replace("{gps_context}", odo_note + gps_context, 1) if "{gps_context}" in prompt else odo_note + prompt
 
     # Build image content list
-    img_content = [{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{req.ticket_b64}"}}]
-    if req.odo_b64:
-        img_content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{req.odo_b64}"}})
+    img_content = [{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{ticket_b64}"}}]
+    if odo_b64:
+        img_content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{odo_b64}"}})
     img_content.append({"type": "text", "text": prompt})
 
     try:
@@ -422,7 +432,7 @@ async def analyze(req: AnalyzeRequest):
         parsed["odometro_km"] = req.manual_odometer_km
 
     # Push to LubeLogger (synchronous so status is included in response)
-    ll_result = await push_to_lubelogger(parsed, req.ticket_b64, req.lubelogger_vehicle_id)
+    ll_result = await push_to_lubelogger(parsed, ticket_b64, req.lubelogger_vehicle_id)
     parsed["_lubelogger"] = ll_result
 
     # Persist
